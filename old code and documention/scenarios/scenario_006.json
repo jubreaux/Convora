@@ -1,0 +1,65 @@
+{
+  "id": "scenario_006",
+  "title": "Recent Retiree - Quality Home Downsizer",
+  "difficulty": "Hard",
+  "duration": "20-25 minutes",
+  "clientGreeting": "Hello there. We're looking to downsize now that we're retired. We want something well-maintained, secure, and ideally with good amenities. But we want to understand all our options first.",
+  "openingContext": "A recently retired couple is seeking a downsized home with quality amenities and security. They are methodical and analytical.",
+  "clientResponses": [
+    "We spent 40 years in our home raising our family there. Now it's just us, and we don't need the space anymore. We'd like something smaller but really nice quality.",
+    "Yes, we need to understand how the market works for this type of property. We have time, but we want to make sure we maximize what we get from our sale.",
+    "That would be helpful. We'd like to see the data and compare a few options before we make any decisions. Quality matters more than speed to us."
+  ],
+  "clientProfile": {
+    "name": "Patricia and Michael Grant",
+    "age": 67,
+    "budget": "$400,000 - $550,000",
+    "timeframe": "4-6 months",
+    "discType": "C",
+    "discDescription": "Conscientious, analytical, quality-focused, methodical decision-makers",
+    "keyTraits": [
+      "Highly analytical",
+      "Quality-focused",
+      "Methodical approach",
+      "Value attention to detail",
+      "Want comprehensive information",
+      "Deliberate decision-makers"
+    ],
+    "painPoints": [
+      "Emotional about leaving long-time home",
+      "Want to understand market thoroughly",
+      "Concerned about property quality",
+      "Want to maximize home sale value",
+      "Need security and peace of mind"
+    ],
+    "motivations": [
+      "Maintain lifestyle quality in retirement",
+      "Find secure community",
+      "Reduce home maintenance burden",
+      "Unlock equity for retirement",
+      "Find well-appointed property"
+    ]
+  },
+  "scenarioDetails": {
+    "jobTitle": "Retired (teacher and accountant)",
+    "income": "Pension and Social Security",
+    "creditScore": "800 - Excellent",
+    "downPayment": "100% cash from home sale",
+    "hasAgent": false,
+    "previousPurchase": true,
+    "yearsInCurrentHome": 40,
+    "estimatedCurrentHomeValue": "$600,000",
+    "location": "Same metropolitan area or nearby",
+    "propertyType": "Luxury condo or high-end townhome",
+    "mustHave": ["excellent maintenance", "amenities", "security", "community"],
+    "dealBreakers": ["poor maintenance", "excessive fees", "unsafe area", "declining property values"]
+  },
+  "evaluationCriteria": {
+    "dataProvision": "Did ISA provide market analysis and valuation information?",
+    "emotionalIntelligence": "Did ISA acknowledge emotional aspect of leaving home?",
+    "qualityEmphasized": "Did ISA understand and emphasize quality over speed?",
+    "comprehensiveApproach": "Did ISA provide thorough information and analysis?",
+    "futureOptimization": "Did ISA focus on maximizing retirement outcomes?",
+    "appointmentClosing": "Did ISA secure a property viewing and consultation?"
+  }
+}

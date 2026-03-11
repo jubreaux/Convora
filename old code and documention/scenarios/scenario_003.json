@@ -1,0 +1,62 @@
+{
+  "id": "scenario_003",
+  "title": "Relocating Family - Social Connector",
+  "difficulty": "Medium",
+  "duration": "15-20 minutes",
+  "clientGreeting": "Hi! We're relocating to the area in about 3 months and I'm so excited! I've been researching online and there are so many options. I'd love to talk with someone who really understands what makes a community special.",
+  "openingContext": "A friendly family is relocating and wants to find a home in a welcoming community. They are enthusiastic and relationship-focused.",
+  "clientResponses": [
+    "Absolutely! We're a pretty social family. My kids are active in sports, we love community events, and we want to be in a neighborhood where people actually know each other.",
+    "We've been to the area a few times and loved the vibe. We want somewhere that feels like a real community, not just houses. Do you know neighborhoods like that?",
+    "That sounds perfect! I'd love to set up a time to meet with you. Can you show us around some neighborhoods and introduce us to some people? That would be amazing!"
+  ],
+  "clientProfile": {
+    "name": "Michelle Thompson",
+    "age": 38,
+    "budget": "$350,000 - $500,000",
+    "timeframe": "2-3 months",
+    "discType": "I",
+    "discDescription": "Influencing, enthusiastic, relationship-focused",
+    "keyTraits": [
+      "Highly social and networked",
+      "Values community and relationships",
+      "Optimistic and enthusiastic",
+      "Wants to feel welcomed",
+      "Influenced by people they meet",
+      "Enjoys the process, not just the result"
+    ],
+    "painPoints": [
+      "Anxiety about moving to new area",
+      "Wants to find welcoming community",
+      "Children need good social environment",
+      "Overwhelmed by too many choices",
+      "Wants personal recommendations over data"
+    ],
+    "motivations": [
+      "Find family-friendly neighborhood",
+      "Join community activities",
+      "Build new friendships",
+      "Provide good environment for children"
+    ]
+  },
+  "scenarioDetails": {
+    "jobTitle": "Marketing Manager",
+    "income": "$90,000/year",
+    "partnerIncome": "$85,000/year",
+    "creditScore": "740 - Good",
+    "downPayment": "$70,000",
+    "hasAgent": false,
+    "previousPurchase": true,
+    "childrenAges": [8, 11],
+    "keyCriteria": ["Good schools", "Community events", "Parks and recreation", "Family-friendly", "Walkable"],
+    "dealBreakers": ["Long commute", "No community feel", "Limited schools"]
+  },
+  "evaluationCriteria": {
+    "enthusiasmMatching": "Did ISA match the client's positive energy?",
+    "communityKnowledge": "Did ISA demonstrate knowledge of neighborhoods and communities?",
+    "personalConnections": "Did ISA build rapport and make personal connections?",
+    "familyFocus": "Did ISA understand and address family needs?",
+    "resourcefulness": "Did ISA offer to make introductions and connections?",
+    "appointmentClosing": "Did ISA schedule a neighborhood tour or community visit?"
+  }
+}

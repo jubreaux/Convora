@@ -1,0 +1,59 @@
+{
+  "id": "scenario_001",
+  "title": "First-Time Home Buyer - Anxious Type",
+  "difficulty": "Easy",
+  "duration": "10-15 minutes",
+  "clientGreeting": "Hi, I've been thinking about buying my first home but I'm honestly pretty nervous about the whole process. I'm not sure where to even start.",
+  "openingContext": "A potential client has reached out about purchasing their first home. They appear uncertain and need guidance.",
+  "clientResponses": [
+    "Yeah, I've been renting for about 5 years now and prices have gone up so much. I'm worried I won't qualify.",
+    "Well, I have a decent job but I'm not sure about my credit score. I've had some issues in the past.",
+    "That would be really helpful. Maybe we could talk about this more in detail? When could we set up a time to meet?"
+  ],
+  "clientProfile": {
+    "name": "Sarah Martinez",
+    "age": 32,
+    "budget": "$250,000 - $350,000",
+    "timeframe": "3-6 months",
+    "discType": "S",
+    "discDescription": "Steady, supportive, wants to build long-term relationship",
+    "keyTraits": [
+      "Risk-averse",
+      "Prefers personal relationships",
+      "Needs reassurance",
+      "Values stability and predictability",
+      "Slow to make decisions but loyal once committed"
+    ],
+    "painPoints": [
+      "Worried about credit qualification",
+      "Concerned about affording down payment",
+      "Anxious about complexity of home buying process",
+      "Fears making wrong decision"
+    ],
+    "motivations": [
+      "Build equity instead of paying rent",
+      "Have control over living space",
+      "Create stability for family"
+    ]
+  },
+  "scenarioDetails": {
+    "jobTitle": "Teacher",
+    "income": "$55,000/year",
+    "creditScore": "650 - Fair",
+    "downPayment": "$25,000 saved",
+    "hasAgent": false,
+    "previousPurchase": false,
+    "location": "Suburban area",
+    "propertyType": "Single family home",
+    "mustHave": ["good schools", "safe neighborhood", "reasonable commute"],
+    "dealBreakers": ["HOA fees", "flood zone", "declining neighborhood"]
+  },
+  "evaluationCriteria": {
+    "reassurance": "Did ISA provide reassurance about credit and qualification concerns?",
+    "processExplanation": "Did ISA explain the home buying process clearly?",
+    "activeListening": "Did ISA acknowledge and validate the client's concerns?",
+    "needsDiscovery": "Did ISA uncover budget, timeline, and property preferences?",
+    "relationshipBuilding": "Did ISA build trust and rapport?",
+    "appointmentClosing": "Did ISA successfully schedule a follow-up meeting?"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "id": "scenario_005",
+  "title": "Distressed Seller - Emotional Situation",
+  "difficulty": "Hard",
+  "duration": "20-25 minutes",
+  "clientGreeting": "Hi... I'm going through a divorce and I need to sell our house quickly. It's been a difficult time and honestly, I'm stressed about the whole thing. I'm not sure what to do or what it's worth.",
+  "openingContext": "A distressed client is dealing with a divorce and needs to sell quickly. They are emotional and need both practical guidance and emotional support.",
+  "clientResponses": [
+    "Yeah... we've been living in the house for 12 years and raising our kids here. It's hard to think about leaving it. But we both need to move forward with our lives.",
+    "I don't really know much about real estate. My ex knows more about these things, but they're not willing to help. I just need someone I can trust to guide me through this.",
+    "That would help a lot. I need someone who understands what I'm going through. When could we meet? I want to make sure I'm getting a fair deal."
+  ],
+  "clientProfile": {
+    "name": "Jennifer Davis",
+    "age": 41,
+    "budget": "Home valued at $350,000 - needs fair market value",
+    "timeframe": "ASAP - 30-45 days",
+    "discType": "S",
+    "discDescription": "Steady, supportive, emotionally vulnerable, needs reassurance",
+    "keyTraits": [
+      "Emotionally stressed",
+      "Trusts-based decision maker",
+      "Needs reassurance and support",
+      "Wants guidance and direction",
+      "Values relationship over optimization",
+      "Slow to open up but loyal"
+    ],
+    "painPoints": [
+      "Going through divorce",
+      "Emotional attachment to home",
+      "Lack of real estate knowledge",
+      "Financial stress",
+      "Custody considerations",
+      "Fear of being taken advantage of"
+    ],
+    "motivations": [
+      "Make clean break and move forward",
+      "Get fair value for home",
+      "Minimize stress and complications",
+      "Maintain stability for children",
+      "Feel supported through process"
+    ]
+  },
+  "scenarioDetails": {
+    "jobTitle": "Nurse",
+    "income": "$62,000/year",
+    "creditScore": "720 - Good",
+    "homeDetails": {
+      "type": "Colonial style home",
+      "yearsOwned": 12,
+      "condition": "Good with minor repairs needed",
+      "location": "Family neighborhood",
+      "estimatedValue": "$350,000"
+    },
+    "hasChildren": true,
+    "childrenWithClient": true,
+    "legalStatus": "Divorce in progress",
+    "mortgageRemaining": "$180,000",
+    "timelineImperative": "Custody hearing in 60 days",
+    "dealBreakers": ["Long selling timeline", "Pushy salespeople", "Not feeling heard"]
+  },
+  "evaluationCriteria": {
+    "emotionalIntelligence": "Did ISA show empathy and understanding for client's situation?",
+    "trustBuilding": "Did ISA establish trust and confidence?",
+    "professionalCompassion": "Did ISA balance support with professional expertise?",
+    "guidanceProvision": "Did ISA provide clear guidance for decisions?",
+    "supportiveApproach": "Did ISA minimize stress and provide reassurance?",
+    "appointmentClosing": "Did ISA secure a home evaluation or meeting?"
+  }
+}

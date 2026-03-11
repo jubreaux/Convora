@@ -1,0 +1,61 @@
+{
+  "id": "scenario_002",
+  "title": "Investor - Aggressive Buyer",
+  "difficulty": "Medium",
+  "duration": "15-20 minutes",
+  "clientGreeting": "Hey, I'm looking to acquire several investment properties this year. I need to move fast and I want someone who can keep up with my pace. What can you do for me?",
+  "openingContext": "An aggressive real estate investor is calling to discuss multiple property acquisitions. They are direct and results-focused.",
+  "clientResponses": [
+    "Look, I don't have time for lengthy explanations. What properties do you currently have that would yield 10%+ ROI?",
+    "I've already done deals in three markets. I'm looking to expand to your area. Give me the bottom line.",
+    "Okay, here's what I need: a list of off-market deals, connections with contractors, and a closing timeline under 30 days. Can you handle that?"
+  ],
+  "clientProfile": {
+    "name": "James Chen",
+    "age": 45,
+    "budget": "$500,000 - $2,000,000",
+    "timeframe": "Immediate",
+    "discType": "D",
+    "discDescription": "Dominant, direct, results-oriented decision maker",
+    "keyTraits": [
+      "Highly decisive",
+      "Impatient with slow processes",
+      "Values efficiency and ROI",
+      "Wants bottom-line results",
+      "Respects competence and speed"
+    ],
+    "painPoints": [
+      "Tired of slow real estate agents",
+      "Frustrated by lack of off-market deal access",
+      "Needs reliable contractor/vendor network",
+      "Wants faster closing timelines"
+    ],
+    "motivations": [
+      "Build investment portfolio rapidly",
+      "Generate passive income",
+      "Achieve financial independence"
+    ]
+  },
+  "scenarioDetails": {
+    "jobTitle": "Business Owner",
+    "income": "$200,000+/year",
+    "creditScore": "780 - Excellent",
+    "downPayment": "$150,000+ available",
+    "hasAgent": false,
+    "previousPurchase": true,
+    "portfolioSize": 3,
+    "targetROI": "10%+",
+    "location": "Growing metropolitan area",
+    "propertyType": "Multi-unit rental properties",
+    "targetAreas": ["High growth neighborhoods", "Good tenant demographics"],
+    "dealBreakers": ["Long sale timelines", "High vacancy rates", "Poor neighborhoods"]
+  },
+  "evaluationCriteria": {
+    "respectForTime": "Did ISA respect the client's time and get to the point quickly?",
+    "competenceShown": "Did ISA demonstrate expertise and local market knowledge?",
+    "resultsOriented": "Did ISA focus on ROI and tangible outcomes?",
+    "processEfficiency": "Did ISA offer expedited processes and solutions?",
+    "networking": "Did ISA offer connections and resources?",
+    "appointmentClosing": "Did ISA secure a meeting or property viewing?"
+  }
+}

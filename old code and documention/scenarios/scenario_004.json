@@ -1,0 +1,64 @@
+{
+  "id": "scenario_004",
+  "title": "Downsizer - Detail-Oriented",
+  "difficulty": "Hard",
+  "duration": "20-25 minutes",
+  "clientGreeting": "Good morning. We're downsizing from our larger home and we need to evaluate our options carefully. I've prepared a spreadsheet with our specific requirements and I'd like to discuss the market analysis in detail.",
+  "openingContext": "A methodical, analytical client is downsizing and wants to make an informed decision based on comprehensive data and detailed analysis.",
+  "clientResponses": [
+    "Yes, well, I've researched comparable properties for the past month. I want to understand the market trends, inventory levels, and realistic pricing expectations for our area.",
+    "I need to ensure the numbers work. What is the current absorption rate? How many similar properties are on the market? What's the average time on market?",
+    "Before I schedule anything, I'd like to review your market analysis, the comparable properties you mention, and your marketing strategy in writing. Can you provide detailed documentation?"
+  ],
+  "clientProfile": {
+    "name": "Robert Williams",
+    "age": 62,
+    "budget": "$450,000 - $550,000",
+    "timeframe": "60-90 days",
+    "discType": "C",
+    "discDescription": "Conscientious, detail-oriented, analytical",
+    "keyTraits": [
+      "Highly analytical and data-driven",
+      "Wants comprehensive information",
+      "Risk-averse without proper data",
+      "Values accuracy and quality",
+      "Slow decision-maker but committed once decided",
+      "Prefers written documentation"
+    ],
+    "painPoints": [
+      "Wants detailed market analysis",
+      "Needs to understand all details before committing",
+      "Concerned about property value",
+      "Wants to avoid mistakes",
+      "Distrusts superficial answers"
+    ],
+    "motivations": [
+      "Maximize proceeds from home sale",
+      "Find well-maintained property",
+      "Understand true market value",
+      "Make informed decision"
+    ]
+  },
+  "scenarioDetails": {
+    "jobTitle": "Retired Engineer",
+    "income": "Fixed income + investments",
+    "creditScore": "800 - Excellent",
+    "downPayment": "100% cash available",
+    "hasAgent": false,
+    "previousPurchase": true,
+    "currentHome": "3,500 sq ft, valued at $550,000",
+    "saleRequired": true,
+    "location": "Same metropolitan area",
+    "propertyType": "Smaller luxury condo or townhome",
+    "mustHave": ["low maintenance", "security", "amenities", "appreciation potential"],
+    "dealBreakers": ["high HOA fees without value", "declining area", "properties needing repair"]
+  },
+  "evaluationCriteria": {
+    "dataProvision": "Did ISA provide detailed market analysis and comparables?",
+    "analyticalApproach": "Did ISA match the client's data-driven approach?",
+    "documentation": "Did ISA offer written reports and analysis?",
+    "accuracy": "Did ISA provide accurate information without exaggeration?",
+    "complexity": "Did ISA handle complex financial scenarios?",
+    "professionalism": "Did ISA demonstrate high professional standards?"
+  }
+}
