@@ -1,31 +1,61 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.responses import PlainTextResponse
+from app.database import engine, Base
+from app.models import (
+    User, PersonalityTemplate, TraitSet, ScenarioContext,
+    FinetuneExample, Scenario, Objective, Session, SessionObjective, Message
+)
+from app.routers import auth, scenarios, sessions
+from seed.load_seed import seed_database
 import uvicorn
 
 
-app = FastAPI(title="Convora Basic API", version="0.1.0")
+# Create all tables
+Base.metadata.create_all(bind=engine)
 
-# Allow local frontends to access this API during development
+# Seed database if needed
+try:
+    seed_database()
+except Exception as e:
+    print(f"Note: Seed data not loaded (this is OK on first run): {e}")
+
+
+# Create FastAPI app
+app = FastAPI(
+    title="Convora Backend API",
+    version="0.1.0",
+    description="ISA Training Platform with AI-Powered Blind Role-Play"
+)
+
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # In production, specify allowed origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Include routers
+app.include_router(auth.router)
+app.include_router(scenarios.router)
+app.include_router(sessions.router)
+
 
 @app.get("/health")
 async def health():
-    """Simple health check endpoint."""
-    return {"status": "ok"}
+    """Health check endpoint."""
+    return {"status": "ok", "version": "0.1.0"}
 
 
-@app.get("/greet/{name}", response_class=PlainTextResponse)
-async def greet(name: str):
-    """Return a plain-text greeting for the given name."""
-    return PlainTextResponse(f"Hello, {name}")
+@app.get("/")
+async def root():
+    """Root endpoint."""
+    return {
+        "app": "Convora Backend API",
+        "version": "0.1.0",
+        "docs": "/docs"
+    }
 
 
 if __name__ == "__main__":
