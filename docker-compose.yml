@@ -1,0 +1,44 @@
+services:
+  mariadb:
+    image: mariadb:latest
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=convora
+      - MYSQL_USER=convora
+      - MYSQL_PASSWORD=convora_password
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: convora-backend:local
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mariadb
+    volumes:
+      - ./backend:/app/backend
+      - ./SeedData:/app/backend/SeedData
+      - ./backend/.env:/app/backend/.env
+    environment:
+      - PYTHONPATH=/app/backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  mariadb_data:

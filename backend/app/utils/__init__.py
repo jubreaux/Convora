@@ -11,8 +11,12 @@ from app.models import User
 
 settings = get_settings()
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing - using argon2 as primary with bcrypt fallback
+try:
+    pwd_context = CryptContext(schemes=["argon2", "bcrypt"], deprecated="auto")
+except Exception:
+    # Fallback if argon2 not available
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # HTTP Bearer for FastAPI dependency
 security = HTTPBearer()

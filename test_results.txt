@@ -1,0 +1,71 @@
+
+============================================================
+  CONVORA API ENDPOINT TEST SUITE
+============================================================
+Base URL: http://localhost:8000
+Test User Email: test@example.com
+
+============================================================
+  1. HEALTH ENDPOINT
+============================================================
+✓ PASS: GET /health
+       Status: ok, Version: 0.1.0
+
+============================================================
+  2. AUTHENTICATION - LOGIN
+============================================================
+✓ PASS: POST /api/auth/login
+       User: test@example.com, Token: eyJhbGciOiJIUzI1NiIs...
+
+============================================================
+  8. SCENARIOS - CREATE CUSTOM
+============================================================
+✓ PASS: POST /api/scenarios
+       Scenario ID: 3, Title: Test Custom Scenario
+
+============================================================
+  3. SCENARIOS - LIST ALL
+============================================================
+✓ PASS: GET /api/scenarios
+       Found 3 scenarios
+       Sample: Test Custom Scenario
+
+============================================================
+  5. SCENARIOS - GET DETAIL
+============================================================
+✓ PASS: GET /api/scenarios/1
+       Scenario: Test Custom Scenario
+
+============================================================
+  4. SCENARIOS - GET RANDOM
+============================================================
+✗ FAIL: GET /api/scenarios/random
+       Status: 404
+
+============================================================
+  6. SESSIONS - CREATE SESSION
+============================================================
+✓ PASS: POST /api/sessions
+       Session ID: 2, Message: Hello! I'm Construction Project Manager, and I'm i...
+
+============================================================
+  7. SESSIONS - SEND MESSAGE
+============================================================
+✗ FAIL: POST /api/sessions/2/messages
+       Status: 500, Error: Internal Server Error
+
+============================================================
+  TEST SUMMARY
+============================================================
+Passed: 6/8
+✓ health
+✓ login
+✓ create_scenario
+✓ list_scenarios
+✓ get_scenario_detail
+✗ get_random_scenario
+✓ create_session
+✗ send_message
+
+============================================================
+

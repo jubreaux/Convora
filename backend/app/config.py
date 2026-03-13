@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str
     JWT_SECRET: str
     OPENAI_API_KEY: str = ""  # Optional; required for voice mode
-    DATABASE_URL: str = "sqlite:///./convora.db"
+    DATABASE_URL: str = "mysql+pymysql://convora:convora_password@mariadb:3306/convora"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 10080  # 7 days
     

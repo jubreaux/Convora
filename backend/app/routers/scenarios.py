@@ -23,14 +23,25 @@ async def list_scenarios(db: Session = Depends(get_db), current_user: User = Dep
 
 @router.get("/random", response_model=ScenarioListResponse)
 async def get_random_scenario(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    """Get a random public scenario."""
+    """Get a random scenario (public or user's own)."""
+    # Get public scenarios
     public_scenarios = db.query(Scenario).filter(Scenario.is_public == True).all()
-    if not public_scenarios:
+    
+    # Also include user's own scenarios
+    user_scenarios = db.query(Scenario).filter(
+        Scenario.created_by_user_id == current_user.id
+    ).all()
+    
+    # Combine lists
+    all_scenarios = public_scenarios + user_scenarios
+    
+    if not all_scenarios:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="No public scenarios available"
+            detail="No scenarios available"
         )
-    return ScenarioListResponse.model_validate(random.choice(public_scenarios))
+    
+    return ScenarioListResponse.model_validate(random.choice(all_scenarios))
 
 
 @router.get("/{scenario_id}", response_model=ScenarioDetailResponse)

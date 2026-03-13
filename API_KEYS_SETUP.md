@@ -48,10 +48,12 @@ OPENAI_API_KEY="sk-your-actual-key-here"
 ANTHROPIC_API_KEY="sk-ant-your-actual-key"
 OPENAI_API_KEY="sk-your-actual-key"
 JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
-DATABASE_URL="sqlite:///./convora.db"
+DATABASE_URL="mysql+pymysql://convora:convora_password@mariadb:3306/convora"
 ALGORITHM="HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES=10080
 ```
+
+**Note**: When running with Docker Compose, `DATABASE_URL` connects to the MariaDB service. If running locally without Docker, switch to a local MariaDB instance or use a different database URL.
 
 ---
 

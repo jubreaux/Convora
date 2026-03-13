@@ -59,15 +59,40 @@ def seed_database():
         
         print("Seeding database...")
         
+        # Helper to read JSON files with encoding fallbacks
+        def _read_json_file(path):
+            if not os.path.exists(path):
+                return None
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except UnicodeDecodeError:
+                try:
+                    with open(path, 'r', encoding='utf-16') as f:
+                        return json.load(f)
+                except UnicodeDecodeError:
+                    with open(path, 'rb') as f:
+                        raw = f.read()
+                        text = raw.decode('utf-8', errors='replace')
+                        try:
+                            return json.loads(text)
+                        except Exception as e:
+                            print(f"✗ Failed to parse JSON at {path}: {e}")
+                            return None
+            except json.JSONDecodeError as e:
+                print(f"✗ JSON decode error for {path}: {e}")
+                return None
+            except Exception as e:
+                print(f"✗ Error reading {path}: {e}")
+                return None
+
         # Load personalities
         personalities_path = os.path.join(
             os.path.dirname(__file__),
             "../SeedData/Personalities.json"
         )
-        if os.path.exists(personalities_path):
-            with open(personalities_path, 'r') as f:
-                personalities_data = json.load(f)
-            
+        personalities_data = _read_json_file(personalities_path)
+        if personalities_data:
             for p in personalities_data.get("Personalities", []):
                 personality = PersonalityTemplate(
                     occupation=p.get("Occupation", ""),
@@ -91,10 +116,8 @@ def seed_database():
             os.path.dirname(__file__),
             "../SeedData/Traits.json"
         )
-        if os.path.exists(traits_path):
-            with open(traits_path, 'r') as f:
-                traits_data = json.load(f)
-            
+        traits_data = _read_json_file(traits_path)
+        if traits_data:
             for t in traits_data.get("Traits", []):
                 trait_set = TraitSet(
                     trait_set_number=t.get("TraitSet", 0),
@@ -111,10 +134,8 @@ def seed_database():
             os.path.dirname(__file__),
             "../SeedData/scenarios.json"
         )
-        if os.path.exists(scenarios_path):
-            with open(scenarios_path, 'r') as f:
-                scenarios_data = json.load(f)
-            
+        scenarios_data = _read_json_file(scenarios_path)
+        if scenarios_data:
             for context_name in scenarios_data.get("Scenarios", []):
                 context = ScenarioContext(name=context_name)
                 db.add(context)
@@ -128,9 +149,24 @@ def seed_database():
         )
         if os.path.exists(finetune_path):
             count = 0
-            with open(finetune_path, 'r') as f:
-                for line in f:
-                    if line.strip():
+            # Try multiple encodings and fall back to a safe decode with replacement
+            lines = []
+            try:
+                with open(finetune_path, 'r', encoding='utf-8') as f:
+                    lines = f.readlines()
+            except UnicodeDecodeError:
+                try:
+                    with open(finetune_path, 'r', encoding='utf-16') as f:
+                        lines = f.readlines()
+                except UnicodeDecodeError:
+                    with open(finetune_path, 'rb') as f:
+                        raw = f.read()
+                        text = raw.decode('utf-8', errors='replace')
+                        lines = text.splitlines()
+
+            for line in lines:
+                if line and line.strip():
+                    try:
                         data = json.loads(line)
                         example = FinetuneExample(
                             prompt=data.get("prompt", ""),
@@ -138,6 +174,8 @@ def seed_database():
                         )
                         db.add(example)
                         count += 1
+                    except Exception as e:
+                        print(f"✗ Skipping invalid finetune line: {e}")
             db.commit()
             print(f"✓ Loaded {count} finetune examples")
         
