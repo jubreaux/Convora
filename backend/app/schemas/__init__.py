@@ -17,6 +17,18 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "id": 1,
+                "email": "user@example.com",
+                "name": "John Doe",
+                "role": "user",
+                "must_reset_password": False,
+                "org_id": None,
+                "org_role": None,
+                "created_at": "2024-01-01T12:00:00"
+            }
+        }
 
 
 class TokenResponse(BaseModel):
