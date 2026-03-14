@@ -4,7 +4,7 @@ import json
 import os
 from sqlalchemy.orm import Session
 from app.database import SessionLocal, engine
-from app.models import Base, PersonalityTemplate, TraitSet, ScenarioContext, FinetuneExample, User, Scenario
+from app.models import Base, PersonalityTemplate, TraitSet, ScenarioContext, FinetuneExample, User, Scenario, Objective
 
 
 def create_test_users(db: Session):
@@ -82,7 +82,7 @@ def seed_scenarios(db: Session, _read_json_file=None):
     try:
         # Count existing scenarios
         existing_count = db.query(Scenario).count()
-        target_count = 8
+        target_count = 6
         
         if existing_count >= target_count:
             print(f"✓ Scenarios already seeded ({existing_count} >= {target_count}). Skipping.")
@@ -149,6 +149,17 @@ def seed_scenarios(db: Session, _read_json_file=None):
                     created_by_user_id=test_user.id,
                 )
                 db.add(scenario)
+                db.flush()  # Flush to get scenario.id
+                
+                # Create objectives for this scenario
+                objectives = scenario_def.get("objectives", [])
+                for objective_label in objectives:
+                    objective = Objective(
+                        scenario_id=scenario.id,
+                        label=objective_label
+                    )
+                    db.add(objective)
+                
                 created_count += 1
             
             except Exception as e:
