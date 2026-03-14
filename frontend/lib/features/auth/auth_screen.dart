@@ -311,7 +311,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (!mounted) return;
     final authState = ref.read(authProvider);
     if (authState.isAuthenticated) {
-      if (mounted) context.go('/home');
+      if (mounted) context.go('/account-setup');
     } else if (authState.error != null) {
       // Show error as an AlertDialog so user can't miss it
       if (mounted) {

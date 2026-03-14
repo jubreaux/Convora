@@ -102,12 +102,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
     _restoreSession();
   }
 
-  /// On startup, check if a stored token exists. If so, mark as authenticated
-  /// so the user does not need to log in again (token has a 7-day TTL).
+  /// On startup, check if a stored token exists. If so, fetch the user from backend
+  /// and mark as authenticated so the user does not need to log in again (token has a 7-day TTL).
   Future<void> _restoreSession() async {
     final token = await apiClient.getStoredToken();
     if (token != null) {
-      state = state.copyWith(isAuthenticated: true);
+      try {
+        final user = await apiClient.getCurrentUser();
+        state = state.copyWith(user: user, isAuthenticated: true);
+      } catch (e) {
+        print('[AUTH] Failed to restore user: $e');
+        // Token exists but user fetch failed - could be invalid/expired token
+        // Mark as authenticated anyway, let other screens handle the redirect
+        state = state.copyWith(isAuthenticated: true);
+      }
     }
   }
 
@@ -196,6 +204,37 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> logout() async {
     await apiClient.logout();
     state = AuthState();
+  }
+
+  Future<void> updateProfile({
+    String? name,
+    String? email,
+  }) async {
+    if (state.user == null) return;
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final updatedUser = await apiClient.updateProfile(
+        name: name,
+        email: email,
+      );
+      state = state.copyWith(
+        user: updatedUser,
+        isLoading: false,
+      );
+    } catch (e) {
+      String errorMsg = e.toString();
+      if (e is DioException) {
+        if (e.response != null && e.response!.data is Map) {
+          errorMsg = e.response!.data['detail'] ?? 'Update failed';
+        } else if (e.type == DioExceptionType.connectionError) {
+          errorMsg = 'Connection error. Check network connectivity.';
+        }
+      }
+      state = state.copyWith(
+        isLoading: false,
+        error: errorMsg,
+      );
+    }
   }
 }
 

@@ -23,13 +23,24 @@ class DashboardScreen extends ConsumerWidget {
             itemBuilder: (context) => [
               PopupMenuItem(
                 child: const ListTile(
+                  leading: Icon(Icons.person_outline),
+                  title: Text('My Profile'),
+                  contentPadding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                ),
+                onTap: () {
+                  context.push('/profile');
+                },
+              ),
+              PopupMenuItem(
+                child: const ListTile(
                   leading: Icon(Icons.history),
                   title: Text('Session History'),
                   contentPadding: EdgeInsets.zero,
                   visualDensity: VisualDensity.compact,
                 ),
                 onTap: () {
-                  context.go('/home');
+                  context.push('/home');
                 },
               ),
               PopupMenuItem(
@@ -303,7 +314,7 @@ class DashboardScreen extends ConsumerWidget {
               SizedBox(
                 height: 56,
                 child: ElevatedButton.icon(
-                  onPressed: () => context.go('/home'),
+                  onPressed: () => context.push('/home'),
                   icon: const Icon(Icons.chat_bubble_outline_rounded),
                   label: const Text('Start a Conversation'),
                   style: ElevatedButton.styleFrom(

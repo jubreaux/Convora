@@ -33,6 +33,12 @@ class UserLogin(BaseModel):
     password: str
 
 
+class UserSelfUpdate(BaseModel):
+    """Schema for user self-service profile updates (name and email only)."""
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+
+
 class UserUpdate(BaseModel):
     """Schema for updating user details (admin only)."""
     name: Optional[str] = None

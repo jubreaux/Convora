@@ -124,6 +124,25 @@ class ConvoraApiClient {
     await dioClient.deleteToken();
   }
 
+  Future<User> getCurrentUser() async {
+    final response = await dioClient.dio.get('/auth/me');
+    return User.fromJson(response.data);
+  }
+
+  Future<User> updateProfile({
+    String? name,
+    String? email,
+  }) async {
+    final response = await dioClient.dio.put(
+      '/auth/me',
+      data: {
+        if (name != null) 'name': name,
+        if (email != null) 'email': email,
+      },
+    );
+    return User.fromJson(response.data);
+  }
+
   // ===== Scenarios =====
   Future<List<ScenarioList>> getScenarios() async {
     final response = await dioClient.dio.get('/scenarios');

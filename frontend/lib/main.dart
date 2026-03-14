@@ -9,6 +9,8 @@ import 'package:convora/features/home/home_screen.dart';
 import 'package:convora/features/training/training_screen.dart';
 import 'package:convora/features/feedback/feedback_screen.dart';
 import 'package:convora/features/session_review/session_review_screen.dart';
+import 'package:convora/features/account_setup/account_setup_screen.dart';
+import 'package:convora/features/profile/profile_screen.dart';
 
 // ===== Router Setup =====
 final routerProvider = Provider<GoRouter>((ref) {
@@ -58,6 +60,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => SessionReviewScreen(
           sessionId: int.parse(state.pathParameters['sessionId']!),
         ),
+      ),
+      GoRoute(
+        path: '/account-setup',
+        builder: (context, state) => const AccountSetupScreen(),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
       ),
     ],
   );
