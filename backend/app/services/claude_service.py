@@ -360,12 +360,27 @@ async def send_message_to_client(
         
         # Process response
         while response.stop_reason == "tool_use":
-            # Extract text and tool calls from response
+            # Convert response content blocks to proper dict format
+            content_blocks = []
+            tool_results = []  # Track tool results to add to history
+            
             for block in response.content:
-                if hasattr(block, "text"):
+                if hasattr(block, "text") and block.text:
                     assistant_response += block.text
+                    content_blocks.append({
+                        "type": "text",
+                        "text": block.text
+                    })
                 elif block.type == "tool_use":
-                    # Process tool call
+                    # Convert tool_use block to dict format
+                    content_blocks.append({
+                        "type": "tool_use",
+                        "id": block.id,
+                        "name": block.name,
+                        "input": block.input
+                    })
+                    
+                    # Process tool call once
                     tool_result = process_tool_call(db, db_session, block.name, block.input)
                     
                     # Track objectives completed
@@ -380,21 +395,31 @@ async def send_message_to_client(
                             "notes": block.input.get("notes")
                         })
                     
-                    # Add tool result to conversation
-                    conversation_history.append({
-                        "role": "assistant",
-                        "content": response.content
+                    # Save tool result for adding to history
+                    tool_results.append({
+                        "tool_use_id": block.id,
+                        "content": json.dumps(tool_result)
                     })
-                    conversation_history.append({
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "tool_result",
-                                "tool_use_id": block.id,
-                                "content": json.dumps(tool_result)
-                            }
-                        ]
-                    })
+            
+            # Add assistant message with properly formatted content blocks
+            conversation_history.append({
+                "role": "assistant",
+                "content": content_blocks
+            })
+            
+            # Add tool results to user message
+            if tool_results:
+                conversation_history.append({
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": result["tool_use_id"],
+                            "content": result["content"]
+                        }
+                        for result in tool_results
+                    ]
+                })
             
             # Continue conversation with tool results
             response = client.messages.create(

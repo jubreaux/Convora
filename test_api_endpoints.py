@@ -279,12 +279,12 @@ def test_multi_turn_conversation(session_id):
     try:
         headers = {**HEADERS, "Authorization": f"Bearer {auth_token}"}
         
-        # First message from agent to client
+        # First message from agent (client greets in response)
         print("\n  ╔════════════════════════════════════════════════════════╗")
-        print("  ║         TURN 1: Agent → Client                        ║")
+        print("  ║         TURN 1: Agent Initiates → Client Greets       ║")
         print("  ╚════════════════════════════════════════════════════════╝")
         
-        agent_msg1 = "Hi there! I heard you might be interested in purchasing property. Is that something you're considering?"
+        agent_msg1 = "Hello, I'd like to help you find your perfect home!"
         print(f"\n  {{agent}}: {agent_msg1}")
         
         payload1 = {"message": agent_msg1}
@@ -298,12 +298,12 @@ def test_multi_turn_conversation(session_id):
         client_response1 = data1.get('reply', 'N/A')
         print(f"\n  {{client}}: {client_response1}")
         
-        # Second message from agent (responding to client's response)
+        # Second message from agent (responding to client's greeting)
         print("\n  ╔════════════════════════════════════════════════════════╗")
-        print("  ║         TURN 2: Agent → Client                        ║")
+        print("  ║         TURN 2: Agent Responds to Client's Greeting   ║")
         print("  ╚════════════════════════════════════════════════════════╝")
         
-        agent_msg2 = "Great! Can you tell me a bit about what you're looking for? Price range, location, that sort of thing?"
+        agent_msg2 = "That's wonderful to meet you! I'd love to help you find the right property. Can you tell me a bit about what you're looking for?"
         print(f"\n  {{agent}}: {agent_msg2}")
         
         payload2 = {"message": agent_msg2}
