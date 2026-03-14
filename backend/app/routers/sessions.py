@@ -12,7 +12,7 @@ from app.schemas import (
     PersonalityTemplateResponse, TraitSetResponse, SessionObjectiveResponse,
     ObjectiveResponse, SessionReviewResponse, SessionScoreEventResponse,
     UserStatsResponse, TimelinePoint, DiscTypeStats, ScenarioPerformance,
-    FeedbackCreate, FeedbackResponse
+    FeedbackCreate, FeedbackResponse, TopScenarioStats
 )
 from app.utils import get_current_user
 from app.services.claude_service import send_message_to_client
@@ -45,6 +45,42 @@ def _can_access_scenario(scenario: Scenario, current_user: User, user_org_ids: l
         return scenario.org_id in user_org_ids
     
     return False
+
+
+def _get_top_scenarios(db: Session) -> list:
+    """Get global top 5 scenarios by total session count."""
+    from app.schemas import TopScenarioStats
+    from sqlalchemy import func
+    
+    # Query: count sessions per scenario, get avg score
+    top_scenarios_query = db.query(
+        Scenario.id,
+        Scenario.title,
+        Scenario.disc_type,
+        func.count(DBSession.id).label('session_count'),
+        func.avg(DBSession.score).label('avg_score')
+    ).join(
+        DBSession, Scenario.id == DBSession.scenario_id
+    ).filter(
+        DBSession.status == 'completed'
+    ).group_by(
+        Scenario.id,
+        Scenario.title,
+        Scenario.disc_type
+    ).order_by(
+        func.count(DBSession.id).desc()
+    ).limit(5).all()
+    
+    return [
+        TopScenarioStats(
+            scenario_id=row[0],
+            title=row[1],
+            disc_type=row[2],
+            total_sessions=row[3],
+            avg_score=round(float(row[4]), 2) if row[4] else 0.0
+        )
+        for row in top_scenarios_query
+    ]
 
 
 @router.post("", response_model=dict)
@@ -522,7 +558,8 @@ async def get_user_stats(
         appointment_rate=round(appointment_rate, 2),
         timeline=timeline,
         disc_breakdown=disc_breakdown,
-        scenario_performance=scenario_performance
+        scenario_performance=scenario_performance,
+        top_scenarios=_get_top_scenarios(db)
     )
 
 

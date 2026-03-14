@@ -315,6 +315,15 @@ class ScenarioPerformance(BaseModel):
     best_score: int
 
 
+class TopScenarioStats(BaseModel):
+    """Global top scenario by session count."""
+    scenario_id: int
+    title: str
+    total_sessions: int
+    avg_score: float
+    disc_type: str
+
+
 class UserStatsResponse(BaseModel):
     """Comprehensive user statistics — single bundled endpoint."""
     total_sessions: int
@@ -325,6 +334,7 @@ class UserStatsResponse(BaseModel):
     timeline: List[TimelinePoint]  # Last 30 completed sessions in order
     disc_breakdown: dict[str, DiscTypeStats]  # "D", "I", "S", "C"
     scenario_performance: List[ScenarioPerformance]  # Sorted by avg_score desc
+    top_scenarios: List[TopScenarioStats] = []  # Global top 5 scenarios by session count
 
 
 # ===== Organization & Enterprise Schemas =====
