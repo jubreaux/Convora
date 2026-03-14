@@ -279,43 +279,43 @@ def test_multi_turn_conversation(session_id):
     try:
         headers = {**HEADERS, "Authorization": f"Bearer {auth_token}"}
         
-        # First message from user
+        # First message from agent to client
         print("\n  ╔════════════════════════════════════════════════════════╗")
-        print("  ║         TURN 1: User → Client                         ║")
+        print("  ║         TURN 1: Agent → Client                        ║")
         print("  ╚════════════════════════════════════════════════════════╝")
         
-        user_msg1 = "What neighborhoods would you recommend for a growing family?"
-        print(f"\n  {{user}}: {user_msg1}")
+        agent_msg1 = "Hi there! I heard you might be interested in purchasing property. Is that something you're considering?"
+        print(f"\n  {{agent}}: {agent_msg1}")
         
-        payload1 = {"message": user_msg1}
+        payload1 = {"message": agent_msg1}
         response1 = requests.post(f"{BASE_URL}/api/sessions/{session_id}/messages", json=payload1, headers=headers)
         
         if response1.status_code != 200:
-            print_test("Turn 1: User Message", False, f"Status: {response1.status_code}")
+            print_test("Turn 1: Agent Message", False, f"Status: {response1.status_code}")
             return False
         
         data1 = response1.json()
         client_response1 = data1.get('reply', 'N/A')
-        print(f"\n  {{ai}}: {client_response1}")
+        print(f"\n  {{client}}: {client_response1}")
         
-        # Second message from user (responding to client's response)
+        # Second message from agent (responding to client's response)
         print("\n  ╔════════════════════════════════════════════════════════╗")
-        print("  ║         TURN 2: User → Client                         ║")
+        print("  ║         TURN 2: Agent → Client                        ║")
         print("  ╚════════════════════════════════════════════════════════╝")
         
-        user_msg2 = "That sounds great! How long would it typically take to find something in that price range?"
-        print(f"\n  {{user}}: {user_msg2}")
+        agent_msg2 = "Great! Can you tell me a bit about what you're looking for? Price range, location, that sort of thing?"
+        print(f"\n  {{agent}}: {agent_msg2}")
         
-        payload2 = {"message": user_msg2}
+        payload2 = {"message": agent_msg2}
         response2 = requests.post(f"{BASE_URL}/api/sessions/{session_id}/messages", json=payload2, headers=headers)
         
         if response2.status_code != 200:
-            print_test("Turn 2: User Message", False, f"Status: {response2.status_code}")
+            print_test("Turn 2: Agent Message", False, f"Status: {response2.status_code}")
             return False
         
         data2 = response2.json()
         client_response2 = data2.get('reply', 'N/A')
-        print(f"\n  {{ai}}: {client_response2}")
+        print(f"\n  {{client}}: {client_response2}")
         
         # Verify conversation is maintaining context
         print("\n  ╔════════════════════════════════════════════════════════╗")
