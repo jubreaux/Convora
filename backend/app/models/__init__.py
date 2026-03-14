@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, UniqueConstraint
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -12,12 +12,15 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     name = Column(String(255), nullable=False)
     role = Column(String(50), default="user", nullable=False)  # "user" or "admin"
+    must_reset_password = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False)
 
     # Relationships
     scenarios = relationship("Scenario", back_populates="created_by", foreign_keys="Scenario.created_by_user_id")
     sessions = relationship("Session", back_populates="user")
+    org_memberships = relationship("OrgMember", back_populates="user", cascade="all, delete-orphan")
+    team_memberships = relationship("TeamMember", back_populates="user", cascade="all, delete-orphan")
 
 
 class PersonalityTemplate(Base):
@@ -81,7 +84,8 @@ class Scenario(Base):
     trait_set_id = Column(Integer, ForeignKey("trait_sets.id"), nullable=False)
     scenario_context_id = Column(Integer, ForeignKey("scenario_contexts.id"), nullable=False)
     ai_system_prompt = Column(Text, nullable=False)
-    is_public = Column(Boolean, default=False, nullable=False)
+    visibility = Column(String(20), default="personal", nullable=False)  # "personal", "org", "public"
+    org_id = Column(Integer, ForeignKey("organizations.id"), nullable=True)  # Only set if visibility="org"
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
@@ -90,8 +94,10 @@ class Scenario(Base):
     trait_set = relationship("TraitSet", back_populates="scenarios")
     scenario_context = relationship("ScenarioContext", back_populates="scenarios")
     created_by = relationship("User", back_populates="scenarios", foreign_keys=[created_by_user_id])
+    organization = relationship("Organization", back_populates="scenarios")
     objectives = relationship("Objective", back_populates="scenario", cascade="all, delete-orphan")
     sessions = relationship("Session", back_populates="scenario")
+    training_assignments = relationship("TrainingAssignment", back_populates="scenario", cascade="all, delete-orphan")
 
     @property
     def transaction_type(self) -> str:
@@ -178,3 +184,94 @@ class SessionScoreEvent(Base):
 
     # Relationships
     session = relationship("Session", back_populates="score_events")
+
+
+# ===== Enterprise Models =====
+class Organization(Base):
+    """Company account that can manage teams and members."""
+    __tablename__ = "organizations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    max_seats = Column(Integer, nullable=True)  # NULL = unlimited
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    members = relationship("OrgMember", back_populates="organization", cascade="all, delete-orphan")
+    teams = relationship("Team", back_populates="organization", cascade="all, delete-orphan")
+    scenarios = relationship("Scenario", back_populates="organization", cascade="all, delete-orphan")
+    training_assignments = relationship("TrainingAssignment", back_populates="organization", cascade="all, delete-orphan")
+
+
+class OrgMember(Base):
+    """Join table: user membership in an organization with their role."""
+    __tablename__ = "org_members"
+    __table_args__ = (
+        UniqueConstraint('org_id', 'user_id', name='uq_org_user'),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    org_id = Column(Integer, ForeignKey("organizations.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    org_role = Column(String(50), nullable=False)  # "org_admin", "team_lead", "member"
+    is_active = Column(Boolean, default=True, nullable=False)
+    joined_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    organization = relationship("Organization", back_populates="members")
+    user = relationship("User", back_populates="org_memberships")
+
+
+class Team(Base):
+    """Team within an organization."""
+    __tablename__ = "teams"
+
+    id = Column(Integer, primary_key=True, index=True)
+    org_id = Column(Integer, ForeignKey("organizations.id"), nullable=False)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    organization = relationship("Organization", back_populates="teams")
+    members = relationship("TeamMember", back_populates="team", cascade="all, delete-orphan")
+    training_assignments = relationship("TrainingAssignment", back_populates="team", cascade="all, delete-orphan")
+
+
+class TeamMember(Base):
+    """Join table: user membership in a team."""
+    __tablename__ = "team_members"
+    __table_args__ = (
+        UniqueConstraint('team_id', 'user_id', name='uq_team_user'),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    is_team_lead = Column(Boolean, default=False, nullable=False)
+    joined_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    team = relationship("Team", back_populates="members")
+    user = relationship("User", back_populates="team_memberships")
+
+
+class TrainingAssignment(Base):
+    """Training scenario assigned to a user, team, or entire organization."""
+    __tablename__ = "training_assignments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    org_id = Column(Integer, ForeignKey("organizations.id"), nullable=False)
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)  # If set: assign to whole team
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # If set (team_id null): assign to individual
+    scenario_id = Column(Integer, ForeignKey("scenarios.id"), nullable=False)
+    due_date = Column(DateTime, nullable=True)
+    notes = Column(Text, nullable=True)
+    assigned_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    organization = relationship("Organization", back_populates="training_assignments")
+    team = relationship("Team", back_populates="training_assignments")
+    scenario = relationship("Scenario", back_populates="training_assignments")

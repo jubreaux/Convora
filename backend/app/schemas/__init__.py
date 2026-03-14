@@ -10,6 +10,9 @@ class UserResponse(BaseModel):
     email: str
     name: str
     role: str
+    must_reset_password: bool
+    org_id: Optional[int] = None  # Set if user is part of an organization
+    org_role: Optional[str] = None  # "org_admin", "team_lead", "member" (populated from OrgMember)
     created_at: datetime
 
     class Config:
@@ -26,6 +29,8 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
     name: str
+    account_type: str  # "personal" or "company"
+    company_name: Optional[str] = None  # Required when account_type="company"
 
 
 class UserLogin(BaseModel):
@@ -37,6 +42,12 @@ class UserSelfUpdate(BaseModel):
     """Schema for user self-service profile updates (name and email only)."""
     name: Optional[str] = None
     email: Optional[EmailStr] = None
+
+
+class UserPasswordReset(BaseModel):
+    """Schema for user password reset."""
+    current_password: str
+    new_password: str
 
 
 class UserUpdate(BaseModel):
@@ -301,3 +312,85 @@ class UserStatsResponse(BaseModel):
     timeline: List[TimelinePoint]  # Last 30 completed sessions in order
     disc_breakdown: dict[str, DiscTypeStats]  # "D", "I", "S", "C"
     scenario_performance: List[ScenarioPerformance]  # Sorted by avg_score desc
+
+
+# ===== Organization & Enterprise Schemas =====
+class OrgMemberResponse(BaseModel):
+    """Org member with user details."""
+    id: int
+    user_id: int
+    org_role: str
+    is_active: bool
+    joined_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class OrganizationResponse(BaseModel):
+    """Organization details."""
+    id: int
+    name: str
+    max_seats: Optional[int] = None
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TeamResponse(BaseModel):
+    """Team details."""
+    id: int
+    org_id: int
+    name: str
+    description: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TeamMemberResponse(BaseModel):
+    """Team member details."""
+    id: int
+    team_id: int
+    user_id: int
+    is_team_lead: bool
+    joined_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TrainingAssignmentResponse(BaseModel):
+    """Training assignment details."""
+    id: int
+    org_id: int
+    team_id: Optional[int] = None
+    user_id: Optional[int] = None
+    scenario_id: int
+    due_date: Optional[datetime] = None
+    notes: Optional[str] = None
+    assigned_by_user_id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TrainingAssignmentCreate(BaseModel):
+    """Request to create a training assignment."""
+    scenario_id: int
+    team_id: Optional[int] = None  # If set: assign to team
+    user_id: Optional[int] = None  # If set (team_id null): assign to individual
+    due_date: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
+class OrgMemberCreate(BaseModel):
+    """Request to provision a new org member."""
+    email: EmailStr
+    name: str
+    temp_password: str
+    org_role: str  # "org_admin", "team_lead", "member"
