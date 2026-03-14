@@ -82,6 +82,12 @@ class _TrainingSessionScreenState
       onResult: (result) {
         // Update live transcript as user speaks
         ref.read(activeSessionProvider.notifier).updateTranscript(result.recognizedWords);
+        
+        // Auto-send when speech recognition is final (complete)
+        if (result.finalResult && result.recognizedWords.isNotEmpty) {
+          _speechToText.stop();
+          _stopListeningAndSend();
+        }
       },
       listenFor: const Duration(seconds: 30),
       pauseFor: const Duration(seconds: 5),
