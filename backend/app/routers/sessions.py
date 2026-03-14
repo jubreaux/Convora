@@ -45,6 +45,19 @@ async def create_session(
     db.commit()
     db.refresh(new_session)
     
+    # Initialize SessionObjective records for all scenario objectives
+    objectives = db.query(Objective).filter(Objective.scenario_id == request.scenario_id).all()
+    for objective in objectives:
+        session_objective = SessionObjective(
+            session_id=new_session.id,
+            objective_id=objective.id,
+            achieved=False,
+            points_awarded=0,
+            notes=None
+        )
+        db.add(session_objective)
+    db.commit()
+    
     # Initialize with opening context (client's first message)
     personality = db.query(PersonalityTemplate).filter(
         PersonalityTemplate.id == scenario.personality_template_id
