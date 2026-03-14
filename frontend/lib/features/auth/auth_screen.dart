@@ -144,11 +144,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) return;
     final authState = ref.read(authProvider);
     if (authState.isAuthenticated) {
-      context.go('/home');
+      if (mounted) context.go('/home');
     } else if (authState.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(authState.error ?? 'Login failed')),
-      );
+      // Show error as an AlertDialog so user can't miss it
+      if (mounted) {
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Login Failed'),
+            content: Text(authState.error ?? 'Login failed. Please try again.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
     }
   }
 
@@ -295,11 +309,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (!mounted) return;
     final authState = ref.read(authProvider);
     if (authState.isAuthenticated) {
-      context.go('/home');
+      if (mounted) context.go('/home');
     } else if (authState.error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(authState.error ?? 'Registration failed')),
-      );
+      // Show error as an AlertDialog so user can't miss it
+      if (mounted) {
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Registration Failed'),
+            content: Text(authState.error ?? 'Registration failed. Please try again.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
     }
   }
 
