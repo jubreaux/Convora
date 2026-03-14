@@ -84,9 +84,9 @@ class _TrainingSessionScreenState
         ref.read(activeSessionProvider.notifier).updateTranscript(result.recognizedWords);
       },
       listenFor: const Duration(seconds: 30),
-      pauseFor: const Duration(seconds: 2),
+      pauseFor: const Duration(seconds: 5),
       localeId: 'en_US',
-      listenOptions: stt.SpeechListenOptions(cancelOnError: true),
+      listenOptions: stt.SpeechListenOptions(cancelOnError: false),
     );
   }
 
