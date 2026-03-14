@@ -5,13 +5,14 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from datetime import datetime
 from app.database import get_db
-from app.models import Session as DBSession, Message, Scenario, PersonalityTemplate, TraitSet, SessionObjective, Objective, User, SessionScoreEvent, OrgMember
+from app.models import Session as DBSession, Message, Scenario, PersonalityTemplate, TraitSet, SessionObjective, Objective, User, SessionScoreEvent, OrgMember, ScenarioFeedback
 from app.schemas import (
     SessionCreateRequest, SessionMessageRequest, SessionMessageResponse,
     SessionEndResponse, SessionHistoryResponse, MessageResponse,
     PersonalityTemplateResponse, TraitSetResponse, SessionObjectiveResponse,
     ObjectiveResponse, SessionReviewResponse, SessionScoreEventResponse,
-    UserStatsResponse, TimelinePoint, DiscTypeStats, ScenarioPerformance
+    UserStatsResponse, TimelinePoint, DiscTypeStats, ScenarioPerformance,
+    FeedbackCreate, FeedbackResponse
 )
 from app.utils import get_current_user
 from app.services.claude_service import send_message_to_client
@@ -523,3 +524,53 @@ async def get_user_stats(
         disc_breakdown=disc_breakdown,
         scenario_performance=scenario_performance
     )
+
+
+@router.post("/{session_id}/feedback", response_model=FeedbackResponse)
+async def submit_feedback(
+    session_id: int,
+    feedback_data: FeedbackCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Submit or update feedback (vote + comment) for a session's scenario.
+    Each session can only have one feedback record (upsert).
+    """
+    # Verify session exists and belongs to current user
+    session = db.query(DBSession).filter(DBSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
+    
+    if session.user_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to feedback on this session")
+    
+    # Check if feedback already exists for this session
+    existing_feedback = db.query(ScenarioFeedback).filter(
+        ScenarioFeedback.session_id == session_id
+    ).first()
+    
+    if existing_feedback:
+        # Update existing feedback
+        existing_feedback.vote = feedback_data.vote
+        existing_feedback.comment = feedback_data.comment
+        existing_feedback.updated_at = datetime.utcnow()
+    else:
+        # Create new feedback
+        feedback = ScenarioFeedback(
+            session_id=session_id,
+            scenario_id=session.scenario_id,
+            user_id=current_user.id,
+            vote=feedback_data.vote,
+            comment=feedback_data.comment
+        )
+        db.add(feedback)
+    
+    db.commit()
+    
+    # Return the feedback record
+    feedback_result = db.query(ScenarioFeedback).filter(
+        ScenarioFeedback.session_id == session_id
+    ).first()
+    
+    return FeedbackResponse.from_orm(feedback_result)

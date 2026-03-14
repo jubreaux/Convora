@@ -275,3 +275,25 @@ class TrainingAssignment(Base):
     organization = relationship("Organization", back_populates="training_assignments")
     team = relationship("Team", back_populates="training_assignments")
     scenario = relationship("Scenario", back_populates="training_assignments")
+
+
+class ScenarioFeedback(Base):
+    """User feedback (voting + comments) on a scenario after a session."""
+    __tablename__ = "scenario_feedback"
+    __table_args__ = (
+        UniqueConstraint('session_id', name='uq_feedback_session'),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("sessions.id"), nullable=False, unique=True)
+    scenario_id = Column(Integer, ForeignKey("scenarios.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    vote = Column(Integer, nullable=False)  # +1 (liked), -1 (disliked), 0 (neutral)
+    comment = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Relationships
+    session = relationship("Session", foreign_keys=[session_id])
+    scenario = relationship("Scenario", foreign_keys=[scenario_id])
+    user = relationship("User", foreign_keys=[user_id])

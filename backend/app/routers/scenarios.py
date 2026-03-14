@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from app.database import get_db
-from app.models import Scenario, Objective, PersonalityTemplate, TraitSet, ScenarioContext, User, OrgMember
-from app.schemas import ScenarioListResponse, ScenarioDetailResponse, ScenarioCreate, ObjectiveResponse
+from app.models import Scenario, Objective, PersonalityTemplate, TraitSet, ScenarioContext, User, OrgMember, ScenarioFeedback
+from app.schemas import ScenarioListResponse, ScenarioDetailResponse, ScenarioCreate, ObjectiveResponse, FeedbackSummaryResponse
 from app.utils import get_current_user, require_admin
 import random
 
@@ -273,3 +273,53 @@ async def delete_scenario(
     db.delete(scenario)
     db.commit()
     return {"ok": True}
+
+
+@router.get("/{scenario_id}/feedback-summary", response_model=FeedbackSummaryResponse)
+async def get_feedback_summary(
+    scenario_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get aggregated feedback summary for a scenario."""
+    from sqlalchemy import func
+    
+    # Verify scenario exists and user has access
+    scenario = db.query(Scenario).filter(Scenario.id == scenario_id).first()
+    if not scenario:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
+    
+    # Verify user can access this scenario
+    visibility_filter = _build_visibility_filter(current_user, db)
+    if not db.query(Scenario).filter(
+        Scenario.id == scenario_id,
+        visibility_filter
+    ).first():
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view feedback for this scenario")
+    
+    # Get all feedback for this scenario
+    feedback_records = db.query(ScenarioFeedback).filter(
+        ScenarioFeedback.scenario_id == scenario_id
+    ).all()
+    
+    # Count votes
+    total_votes = len(feedback_records)
+    likes = sum(1 for f in feedback_records if f.vote == 1)
+    dislikes = sum(1 for f in feedback_records if f.vote == -1)
+    neutrals = sum(1 for f in feedback_records if f.vote == 0)
+    
+    # Calculate average sentiment
+    if total_votes > 0:
+        average_sentiment = round((likes - dislikes) / total_votes, 2)
+    else:
+        average_sentiment = 0.0
+    
+    return FeedbackSummaryResponse(
+        scenario_id=scenario_id,
+        total_votes=total_votes,
+        likes=likes,
+        dislikes=dislikes,
+        neutrals=neutrals,
+        average_sentiment=average_sentiment,
+        total_sessions_with_feedback=total_votes
+    )

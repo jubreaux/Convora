@@ -407,3 +407,39 @@ class OrgMemberCreate(BaseModel):
     name: str
     temp_password: str
     org_role: str  # "org_admin", "team_lead", "member"
+
+
+# ===== Feedback Schemas =====
+class FeedbackCreate(BaseModel):
+    """Request to submit or update scenario feedback."""
+    vote: int  # +1 (liked), -1 (disliked), 0 (neutral)
+    comment: Optional[str] = None
+
+
+class FeedbackResponse(BaseModel):
+    """User feedback on a scenario."""
+    id: int
+    session_id: int
+    scenario_id: int
+    user_id: int
+    vote: int
+    comment: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class FeedbackSummaryResponse(BaseModel):
+    """Aggregated feedback summary for a scenario."""
+    scenario_id: int
+    total_votes: int
+    likes: int  # vote == +1
+    dislikes: int  # vote == -1
+    neutrals: int  # vote == 0
+    average_sentiment: float  # (-dislikes + likes) / total_votes if total_votes > 0 else 0
+    total_sessions_with_feedback: int
+
+    class Config:
+        from_attributes = True
