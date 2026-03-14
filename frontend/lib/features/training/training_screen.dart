@@ -21,6 +21,7 @@ class _TrainingSessionScreenState
   bool _speechInitialized = false;
   bool _hasText = false;
   bool _voiceMode = false;
+  bool _isStartingListening = false;
 
   @override
   void initState() {
@@ -58,46 +59,56 @@ class _TrainingSessionScreenState
   }
 
   Future<void> _startListening() async {
-    if (!_speechInitialized) {
+    // Guard against concurrent calls (e.g. double-tap or rapid auto-resume)
+    if (_isStartingListening) return;
+    _isStartingListening = true;
+
+    try {
+      // Re-initialize on every call — Android SpeechRecognizer needs this
+      // after a session ends (finalResult) to avoid silent failures.
       await _initSpeech();
-    }
+      if (!_speechInitialized) return;
 
-    // Request mic permission
-    final status = await Permission.microphone.request();
-    if (!status.isGranted) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Microphone permission required'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      return;
-    }
-
-    // Enter voice conversation mode
-    _voiceMode = true;
-
-    // Call notifier to set isRecording=true
-    await ref.read(activeSessionProvider.notifier).startListening();
-
-    _speechToText.listen(
-      onResult: (result) {
-        // Update live transcript as user speaks
-        ref.read(activeSessionProvider.notifier).updateTranscript(result.recognizedWords);
-        
-        // Auto-send when speech recognition is final (complete)
-        if (result.finalResult && result.recognizedWords.isNotEmpty) {
-          _speechToText.stop();
-          _stopListeningAndSend();
+      // Request mic permission
+      final status = await Permission.microphone.request();
+      if (!status.isGranted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Microphone permission required'),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
-      },
-      listenFor: const Duration(seconds: 30),
-      pauseFor: const Duration(seconds: 5),
-      localeId: 'en_US',
-      listenOptions: stt.SpeechListenOptions(cancelOnError: false),
-    );
+        return;
+      }
+
+      // Enter voice conversation mode
+      _voiceMode = true;
+
+      // Call notifier to set isRecording=true
+      await ref.read(activeSessionProvider.notifier).startListening();
+
+      _speechToText.listen(
+        onResult: (result) {
+          // Update live transcript as user speaks
+          ref.read(activeSessionProvider.notifier).updateTranscript(result.recognizedWords);
+
+          // Auto-send when speech recognition is final (complete)
+          if (result.finalResult && result.recognizedWords.isNotEmpty) {
+            _speechToText.stop();
+            _stopListeningAndSend();
+          }
+        },
+        onSoundLevelChange: null,
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 5),
+        localeId: 'en_US',
+        listenOptions: stt.SpeechListenOptions(cancelOnError: true),
+      );
+    } finally {
+      _isStartingListening = false;
+    }
   }
 
   Future<void> _stopListeningAndSend() async {
@@ -193,12 +204,14 @@ class _TrainingSessionScreenState
       }
 
       // Auto-restart listening after TTS finishes (voice conversation loop)
+      // Delay 600ms to let the Android SpeechRecognizer fully release before
+      // re-opening (prevents silent failure on 2nd+ listen attempt).
       if (_voiceMode &&
           (previous?.isSpeaking ?? false) &&
           !next.isSpeaking &&
           !next.isEnded &&
           !next.isLoading) {
-        Future.microtask(() {
+        Future.delayed(const Duration(milliseconds: 600), () {
           if (mounted && _voiceMode) _startListening();
         });
       }
