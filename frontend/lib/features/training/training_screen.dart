@@ -19,11 +19,16 @@ class _TrainingSessionScreenState
   late stt.SpeechToText _speechToText;
   late ScrollController _scrollController;
   bool _speechInitialized = false;
+  bool _hasText = false;
 
   @override
   void initState() {
     super.initState();
     _messageController = TextEditingController();
+    _messageController.addListener(() {
+      final hasText = _messageController.text.trim().isNotEmpty;
+      if (hasText != _hasText) setState(() => _hasText = hasText);
+    });
     _speechToText = stt.SpeechToText();
     _scrollController = ScrollController();
     _initSpeech();
@@ -117,6 +122,7 @@ class _TrainingSessionScreenState
     if (message.isEmpty) return;
 
     _messageController.clear();
+    setState(() => _hasText = false);
 
     // Send text with voice=false (no TTS response audio)
     await ref
@@ -125,21 +131,21 @@ class _TrainingSessionScreenState
   }
 
   Future<void> _endSession() async {
-    try {
-      final session = ref.read(activeSessionProvider);
-      if (session.sessionId == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('No active session to end. Please start a training session first.'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
-        return;
+    final session = ref.read(activeSessionProvider);
+    if (session.sessionId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No active session. Please start a training session first.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
       }
+      return;
+    }
+    try {
       await ref.read(activeSessionProvider.notifier).endSession();
-      if (mounted) context.go('/feedback');
+      // Navigation is handled by the ref.listen block in build().
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -176,11 +182,11 @@ class _TrainingSessionScreenState
       }
     });
 
-    // Auto-scroll to newest message
+    // Auto-scroll to newest message (position 0 = bottom in a reversed list).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients && sessionState.messages.isNotEmpty) {
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
+          0,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
@@ -384,11 +390,9 @@ class _TrainingSessionScreenState
                 // Send button
                 FloatingActionButton(
                   heroTag: 'sendButton',
-                  onPressed: isProcessing || sessionState.isRecording
+                  onPressed: isProcessing || sessionState.isRecording || !_hasText
                       ? null
-                      : (_messageController.text.trim().isEmpty
-                          ? null
-                          : _sendMessage),
+                      : _sendMessage,
                   mini: true,
                   child: isProcessing
                       ? const SizedBox(

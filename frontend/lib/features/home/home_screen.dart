@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:convora/core/providers/providers.dart';
+import 'package:convora/features/auth/auth_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -19,7 +20,23 @@ class HomeScreen extends ConsumerWidget {
             PopupMenuButton(
               itemBuilder: (context) => [
                 PopupMenuItem(
-                  child: const Text('Logout'),
+                  child: const ListTile(
+                    leading: Icon(Icons.dns_outlined),
+                    title: Text('Change Server'),
+                    contentPadding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  onTap: () => Future.microtask(
+                    () => showServerDialog(context, ref),
+                  ),
+                ),
+                PopupMenuItem(
+                  child: const ListTile(
+                    leading: Icon(Icons.logout),
+                    title: Text('Logout'),
+                    contentPadding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                  ),
                   onTap: () {
                     ref.read(authProvider.notifier).logout();
                     context.go('/login');
@@ -38,7 +55,7 @@ class HomeScreen extends ConsumerWidget {
         body: TabBarView(
           children: [
             _ScenariosTab(scenariosAsync: scenariosAsync),
-            _HistoryTab(),
+            const _HistoryTab(),
           ],
         ),
       ),
@@ -171,15 +188,25 @@ class _HistoryTab extends ConsumerWidget {
           itemCount: sessions.length,
           itemBuilder: (context, index) {
             final session = sessions[index];
+            final date = session.endedAt ?? session.startedAt;
+            final dateStr =
+                '${date.month}/${date.day}/${date.year}  ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
             return ListTile(
-              title: Text('Score: ${session.score}'),
-              subtitle: Text(session.endedAt?.toString() ?? 'In Progress'),
-              trailing: Text(
-                session.status,
-                style: TextStyle(
+              title: Text(
+                session.scenarioTitle,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+              subtitle: Text('Score: ${session.score}   •   $dateStr'),
+              trailing: Chip(
+                label: Text(session.status),
+                backgroundColor: session.status == 'completed'
+                    ? Colors.green.shade100
+                    : Colors.orange.shade100,
+                labelStyle: TextStyle(
                   color: session.status == 'completed'
-                      ? Colors.green
-                      : Colors.orange,
+                      ? Colors.green.shade800
+                      : Colors.orange.shade800,
+                  fontSize: 12,
                 ),
               ),
             );

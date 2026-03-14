@@ -3,6 +3,101 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:convora/core/providers/providers.dart';
 
+// ===== Shared helper: show a dialog to change the server URL =====
+Future<void> showServerDialog(BuildContext context, WidgetRef ref) async {
+  final current = ref.read(serverConfigProvider);
+  final controller = TextEditingController(text: current);
+
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Server URL'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: 'Base URL',
+              hintText: 'http://192.168.1.100:8400/api',
+              prefixIcon: Icon(Icons.dns_outlined),
+            ),
+            keyboardType: TextInputType.url,
+            autocorrect: false,
+            onSubmitted: (_) {
+              _saveAndPop(ctx, controller, ref);
+            },
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Examples:\n'
+            '• http://10.0.2.2:8400/api  (Android emulator)\n'
+            '• http://192.168.x.x:8400/api  (LAN / physical device)',
+            style: TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => _saveAndPop(ctx, controller, ref),
+          child: const Text('Save'),
+        ),
+      ],
+    ),
+  );
+  controller.dispose();
+}
+
+void _saveAndPop(
+    BuildContext ctx, TextEditingController ctrl, WidgetRef ref) {
+  final url = ctrl.text.trim();
+  if (url.isNotEmpty) {
+    ref.read(serverConfigProvider.notifier).setUrl(url);
+  }
+  Navigator.of(ctx).pop();
+}
+
+// ===== Server URL tile (reused in both login & register) =====
+class _ServerTile extends ConsumerWidget {
+  const _ServerTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final url = ref.watch(serverConfigProvider);
+    return InkWell(
+      onTap: () => showServerDialog(context, ref),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.dns_outlined, size: 18, color: Colors.grey.shade600),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                url,
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Icon(Icons.edit_outlined, size: 16, color: Colors.grey.shade500),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ===== Login Screen =====
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -12,26 +107,26 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   late TextEditingController _emailController;
-  late TextEditingController passwordController;
+  late TextEditingController _passwordController;
   bool _obscurePassword = true;
 
   @override
   void initState() {
     super.initState();
     _emailController = TextEditingController();
-    passwordController = TextEditingController();
+    _passwordController = TextEditingController();
   }
 
   @override
   void dispose() {
     _emailController.dispose();
-    passwordController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
   void _handleLogin() async {
     final email = _emailController.text.trim();
-    final password = passwordController.text;
+    final password = _passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
       if (!mounted) return;
@@ -94,7 +189,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextField(
-                  controller: passwordController,
+                  controller: _passwordController,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     suffixIcon: IconButton(
@@ -109,7 +204,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   obscureText: _obscurePassword,
+                  onSubmitted: (_) => authState.isLoading ? null : _handleLogin(),
                 ),
+                const SizedBox(height: 12),
+                // Server URL row — tap to change the backend server
+                const _ServerTile(),
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: authState.isLoading ? null : _handleLogin,
@@ -119,8 +218,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation(Colors.white),
+                            valueColor: AlwaysStoppedAnimation(Colors.white),
                           ),
                         )
                       : const Text('Login'),
@@ -145,6 +243,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 }
 
+// ===== Register Screen =====
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
@@ -225,6 +324,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               TextField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Full Name'),
+                textCapitalization: TextCapitalization.words,
               ),
               const SizedBox(height: 16),
               TextField(
@@ -250,6 +350,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 obscureText: _obscurePassword,
               ),
+              const SizedBox(height: 12),
+              // Server URL row — tap to change the backend server
+              const _ServerTile(),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: authState.isLoading ? null : _handleRegister,
@@ -271,3 +374,4 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     );
   }
 }
+

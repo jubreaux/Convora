@@ -8,10 +8,14 @@ class DioClient {
   final FlutterSecureStorage secureStorage;
   static const String _tokenKey = 'auth_token';
 
-  DioClient({required this.secureStorage}) {
+  DioClient({required this.secureStorage, required String initialBaseUrl}) {
+    _initDio(initialBaseUrl);
+  }
+
+  void _initDio(String baseUrl) {
     dio = Dio(
       BaseOptions(
-        baseUrl: AppConfig.getBaseUrl(),
+        baseUrl: baseUrl,
         connectTimeout: Duration(seconds: AppConfig.connectTimeoutSeconds),
         receiveTimeout: Duration(seconds: AppConfig.receiveTimeoutSeconds),
         contentType: 'application/json',
@@ -27,13 +31,16 @@ class DioClient {
     );
   }
 
+  /// Update the base URL in-place (no new DioClient needed).
+  void updateBaseUrl(String url) {
+    dio.options.baseUrl = url;
+  }
+
   Future<void> _onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
     final token = await secureStorage.read(key: _tokenKey);
-    print('[DIO] Environment: ${AppConfig.getEnvironment()}');
-    print('[DIO] Request to: ${options.path}, Token: ${token != null ? "✓ present" : "✗ missing"}');
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
     }
@@ -68,6 +75,9 @@ class ConvoraApiClient {
   final DioClient dioClient;
 
   ConvoraApiClient({required this.dioClient});
+
+  /// Returns the stored JWT token (used to check if a session exists).
+  Future<String?> getStoredToken() => dioClient.getToken();
 
   // ===== Auth =====
   Future<AuthResponse> register({
@@ -133,7 +143,7 @@ class ConvoraApiClient {
   Future<SessionMessageResponse> sendMessage({
     required int sessionId,
     required String message,
-    bool voice = false,  // If true, request TTS audio synthesis
+    bool voice = false,
   }) async {
     final response = await dioClient.dio.post(
       '/sessions/$sessionId/messages',

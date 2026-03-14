@@ -1,12 +1,61 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:convora/core/api/convora_api.dart';
+import 'package:convora/core/config/app_config.dart';
 import 'dart:convert';
 import 'package:just_audio/just_audio.dart';
 
+// ===== Server Config =====
+class ServerConfigNotifier extends StateNotifier<String> {
+  ServerConfigNotifier() : super(_defaultUrl()) {
+    _loadSaved();
+  }
+
+  /// Platform-aware default URL.
+  static String _defaultUrl() {
+    if (kIsWeb) return 'http://localhost:8400/api';
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:8400/api';
+    }
+    return 'http://localhost:8400/api';
+  }
+
+  Future<void> _loadSaved() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(AppConfig.serverUrlKey);
+    if (saved != null && saved.isNotEmpty) {
+      state = saved;
+    }
+  }
+
+  Future<void> setUrl(String url) async {
+    final trimmed = url.trim();
+    if (trimmed.isEmpty) return;
+    state = trimmed;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(AppConfig.serverUrlKey, trimmed);
+  }
+}
+
+final serverConfigProvider =
+    StateNotifierProvider<ServerConfigNotifier, String>(
+  (ref) => ServerConfigNotifier(),
+);
+
 // ===== Dio Client Provider =====
 final dioClientProvider = Provider<DioClient>((ref) {
-  return DioClient(secureStorage: const FlutterSecureStorage());
+  final initialUrl = ref.read(serverConfigProvider);
+  final client = DioClient(
+    secureStorage: const FlutterSecureStorage(),
+    initialBaseUrl: initialUrl,
+  );
+  // Keep base URL in sync without rebuilding the whole client (avoids auth reset).
+  ref.listen(serverConfigProvider, (_, next) {
+    client.updateBaseUrl(next);
+  });
+  return client;
 });
 
 // ===== API Client Provider =====
@@ -48,7 +97,18 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   final ConvoraApiClient apiClient;
 
-  AuthNotifier(this.apiClient) : super(AuthState());
+  AuthNotifier(this.apiClient) : super(AuthState()) {
+    _restoreSession();
+  }
+
+  /// On startup, check if a stored token exists. If so, mark as authenticated
+  /// so the user does not need to log in again (token has a 7-day TTL).
+  Future<void> _restoreSession() async {
+    final token = await apiClient.getStoredToken();
+    if (token != null) {
+      state = state.copyWith(isAuthenticated: true);
+    }
+  }
 
   Future<void> register({
     required String email,
@@ -370,37 +430,18 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
   Future<void> _playAudio(String base64Mp3) async {
     state = state.copyWith(isSpeaking: true);
     try {
-      // Decode base64 to bytes
       final audioBytes = base64.decode(base64Mp3);
-      
-      // Create a temporary source from the bytes
       final source = AudioSource.uri(
         Uri.dataFromBytes(audioBytes, mimeType: 'audio/mpeg'),
       );
-      
-      // Load and play the audio
       await _audioPlayer.setAudioSource(source);
       await _audioPlayer.play();
-      
-      // Wait for playback to finish by monitoring player state
-      bool isPlaying = true;
-      _audioPlayer.playerStateStream.listen((playerState) {
-        if (playerState.processingState == ProcessingState.completed) {
-          isPlaying = false;
-        }
-      });
-      
-      // Wait a bit for playback to complete (with a safety timeout)
-      for (int i = 0; i < 300; i++) {
-        await Future.delayed(const Duration(milliseconds: 100));
-        final currentState = _audioPlayer.playerState;
-        if (currentState.processingState == ProcessingState.completed) {
-          break;
-        }
-      }
+      // Wait for playback to finish (with a 60-second safety timeout).
+      await _audioPlayer.processingStateStream
+          .firstWhere((s) => s == ProcessingState.completed)
+          .timeout(const Duration(seconds: 60));
     } catch (e) {
-      // Log error but don't crash - voice is optional
-      print('Audio playback error: $e');
+      // Voice is optional — don't surface audio errors to the user.
     } finally {
       state = state.copyWith(isSpeaking: false);
     }
