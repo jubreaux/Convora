@@ -20,6 +20,7 @@ class _TrainingSessionScreenState
   late ScrollController _scrollController;
   bool _speechInitialized = false;
   bool _hasText = false;
+  bool _voiceMode = false;
 
   @override
   void initState() {
@@ -74,6 +75,9 @@ class _TrainingSessionScreenState
       }
       return;
     }
+
+    // Enter voice conversation mode
+    _voiceMode = true;
 
     // Call notifier to set isRecording=true
     await ref.read(activeSessionProvider.notifier).startListening();
@@ -179,9 +183,30 @@ class _TrainingSessionScreenState
           ),
         );
       }
-      
-      // Auto-navigate to feedback when session ends
+
+      // Stop STT immediately when AI starts speaking (prevent echo/feedback)
+      if (next.isSpeaking && !(previous?.isSpeaking ?? false)) {
+        if (_speechToText.isListening) {
+          _speechToText.stop();
+          ref.read(activeSessionProvider.notifier).stopRecording();
+        }
+      }
+
+      // Auto-restart listening after TTS finishes (voice conversation loop)
+      if (_voiceMode &&
+          (previous?.isSpeaking ?? false) &&
+          !next.isSpeaking &&
+          !next.isEnded &&
+          !next.isLoading) {
+        Future.microtask(() {
+          if (mounted && _voiceMode) _startListening();
+        });
+      }
+
+      // Clear voice mode when session ends
       if (next.isEnded && !(previous?.isEnded ?? false)) {
+        _voiceMode = false;
+        // Auto-navigate to feedback when session ends
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted) context.go('/feedback');
         });
