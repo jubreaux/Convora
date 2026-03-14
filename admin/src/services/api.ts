@@ -13,6 +13,7 @@ import {
   UserStats,
   PaginationParams,
   SessionDetail,
+  SessionReview,
 } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
@@ -114,6 +115,11 @@ class ApiClient {
 
   async getUserSessions(userId: number): Promise<SessionDetail[]> {
     const response = await this.api.get<SessionDetail[]>(`/api/sessions/users/${userId}/history`);
+    return response.data;
+  }
+
+  async getSessionReview(sessionId: number): Promise<SessionReview> {
+    const response = await this.api.get<SessionReview>(`/api/sessions/${sessionId}/review`);
     return response.data;
   }
 

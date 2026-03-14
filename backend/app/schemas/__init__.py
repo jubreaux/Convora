@@ -225,3 +225,36 @@ class SessionHistoryResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class SessionScoreEventResponse(BaseModel):
+    id: int
+    event_type: str
+    points: int
+    label: Optional[str] = None
+    reason: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class SessionReviewResponse(BaseModel):
+    """Full session review — returned by GET /sessions/{id}/review."""
+    id: int
+    scenario_id: int
+    scenario_title: str
+    status: str
+    final_score: int
+    appointment_set: bool
+    started_at: datetime
+    ended_at: Optional[datetime] = None
+    disc_type: str
+    personality: PersonalityTemplateResponse
+    trait_set: TraitSetResponse
+    objectives: List[SessionObjectiveResponse]
+    messages: List[MessageResponse]
+    score_events: List[SessionScoreEventResponse]
+
+    class Config:
+        from_attributes = True

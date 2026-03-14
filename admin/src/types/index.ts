@@ -178,3 +178,39 @@ export interface PaginationParams {
   limit?: number;
   search?: string;
 }
+
+// Session Review Types
+export interface ScoreEvent {
+  id: number;
+  event_type: string;
+  points: number;
+  label?: string | null;
+  reason?: string | null;
+  created_at: string;
+}
+
+export interface SessionObjectiveDetail {
+  id: number;
+  objective: Objective;
+  achieved: boolean;
+  points_awarded: number;
+  notes?: string | null;
+  achieved_at?: string | null;
+}
+
+export interface SessionReview {
+  id: number;
+  scenario_id: number;
+  scenario_title: string;
+  status: string;
+  final_score: number;
+  appointment_set: boolean;
+  disc_type: string;
+  started_at: string;
+  ended_at?: string | null;
+  personality: PersonalityTemplate;
+  trait_set: TraitSet;
+  objectives: SessionObjectiveDetail[];
+  messages: Message[];
+  score_events: ScoreEvent[];
+}

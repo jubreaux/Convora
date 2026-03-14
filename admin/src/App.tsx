@@ -12,6 +12,7 @@ import UserList from './pages/Users/UserList';
 import UserDetail from './pages/Users/UserDetail';
 import ScenarioList from './pages/Scenarios/ScenarioList';
 import ScenarioDetail from './pages/Scenarios/ScenarioDetail';
+import SessionDetail from './pages/Sessions/SessionDetail';
 
 const ProtectedRoute: React.FC<{
   children: React.ReactNode;
@@ -124,6 +125,15 @@ const App: React.FC = () => {
           element={
             <ProtectedRoute user={user} isLoading={isLoading}>
               <ScenarioDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/sessions/:sessionId"
+          element={
+            <ProtectedRoute user={user} isLoading={isLoading}>
+              <SessionDetail />
             </ProtectedRoute>
           }
         />

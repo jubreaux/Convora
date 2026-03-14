@@ -324,3 +324,94 @@ class SessionHistory {
     );
   }
 }
+
+class ScoreEvent {
+  final int id;
+  final String eventType;
+  final int points;
+  final String? label;
+  final String? reason;
+  final DateTime createdAt;
+
+  ScoreEvent({
+    required this.id,
+    required this.eventType,
+    required this.points,
+    this.label,
+    this.reason,
+    required this.createdAt,
+  });
+
+  factory ScoreEvent.fromJson(Map<String, dynamic> json) {
+    return ScoreEvent(
+      id: json['id'] as int,
+      eventType: json['event_type'] as String,
+      points: json['points'] as int,
+      label: json['label'] as String?,
+      reason: json['reason'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
+    );
+  }
+}
+
+class SessionReviewResponse {
+  final int id;
+  final int scenarioId;
+  final String scenarioTitle;
+  final String status;
+  final int finalScore;
+  final bool appointmentSet;
+  final DateTime startedAt;
+  final DateTime? endedAt;
+  final String discType;
+  final PersonalityTemplate personality;
+  final TraitSet traitSet;
+  final List<SessionObjective> objectives;
+  final List<SessionMessage> messages;
+  final List<ScoreEvent> scoreEvents;
+
+  SessionReviewResponse({
+    required this.id,
+    required this.scenarioId,
+    required this.scenarioTitle,
+    required this.status,
+    required this.finalScore,
+    required this.appointmentSet,
+    required this.startedAt,
+    this.endedAt,
+    required this.discType,
+    required this.personality,
+    required this.traitSet,
+    required this.objectives,
+    required this.messages,
+    required this.scoreEvents,
+  });
+
+  factory SessionReviewResponse.fromJson(Map<String, dynamic> json) {
+    return SessionReviewResponse(
+      id: json['id'] as int,
+      scenarioId: json['scenario_id'] as int,
+      scenarioTitle: json['scenario_title'] as String,
+      status: json['status'] as String,
+      finalScore: json['final_score'] as int,
+      appointmentSet: json['appointment_set'] as bool,
+      startedAt: DateTime.parse(json['started_at'] as String),
+      endedAt: json['ended_at'] != null
+          ? DateTime.parse(json['ended_at'] as String)
+          : null,
+      discType: json['disc_type'] as String,
+      personality: PersonalityTemplate.fromJson(
+          json['personality'] as Map<String, dynamic>),
+      traitSet: TraitSet.fromJson(json['trait_set'] as Map<String, dynamic>),
+      objectives: (json['objectives'] as List)
+          .map((e) => SessionObjective.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      messages: (json['messages'] as List)
+          .map((e) => SessionMessage.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      scoreEvents: (json['score_events'] as List)
+          .map((e) => ScoreEvent.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}

@@ -169,4 +169,9 @@ class ConvoraApiClient {
         .map((s) => SessionHistory.fromJson(s))
         .toList();
   }
+
+  Future<SessionReviewResponse> getSessionReview(int sessionId) async {
+    final response = await dioClient.dio.get('/sessions/$sessionId/review');
+    return SessionReviewResponse.fromJson(response.data);
+  }
 }

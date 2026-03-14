@@ -197,18 +197,25 @@ class _HistoryTab extends ConsumerWidget {
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
               subtitle: Text('Score: ${session.score}   •   $dateStr'),
-              trailing: Chip(
-                label: Text(session.status),
-                backgroundColor: session.status == 'completed'
-                    ? Colors.green.shade100
-                    : Colors.orange.shade100,
-                labelStyle: TextStyle(
-                  color: session.status == 'completed'
-                      ? Colors.green.shade800
-                      : Colors.orange.shade800,
-                  fontSize: 12,
-                ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Chip(
+                    label: Text(session.status),
+                    backgroundColor: session.status == 'completed'
+                        ? Colors.green.shade100
+                        : Colors.orange.shade100,
+                    labelStyle: TextStyle(
+                      color: session.status == 'completed'
+                          ? Colors.green.shade800
+                          : Colors.orange.shade800,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right, color: Colors.grey),
+                ],
               ),
+              onTap: () => context.push('/session-review/${session.id}'),
             );
           },
         );

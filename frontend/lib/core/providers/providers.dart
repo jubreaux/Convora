@@ -254,6 +254,13 @@ final sessionHistoryProvider =
   return await apiClient.getUserHistory();
 });
 
+// ===== Session Review Provider =====
+final sessionReviewProvider =
+    FutureProvider.family<SessionReviewResponse, int>((ref, sessionId) async {
+  final apiClient = ref.watch(apiClientProvider);
+  return await apiClient.getSessionReview(sessionId);
+});
+
 // ===== Active Session State =====
 class ActiveSessionState {
   final int? sessionId;

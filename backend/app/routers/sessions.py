@@ -4,12 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime
 from app.database import get_db
-from app.models import Session as DBSession, Message, Scenario, PersonalityTemplate, TraitSet, SessionObjective, Objective, User
+from app.models import Session as DBSession, Message, Scenario, PersonalityTemplate, TraitSet, SessionObjective, Objective, User, SessionScoreEvent
 from app.schemas import (
     SessionCreateRequest, SessionMessageRequest, SessionMessageResponse,
     SessionEndResponse, SessionHistoryResponse, MessageResponse,
     PersonalityTemplateResponse, TraitSetResponse, SessionObjectiveResponse,
-    ObjectiveResponse
+    ObjectiveResponse, SessionReviewResponse, SessionScoreEventResponse
 )
 from app.utils import get_current_user
 from app.services.claude_service import send_message_to_client
@@ -156,6 +156,70 @@ async def get_user_history(
         ))
     
     return history
+
+
+@router.get("/{session_id}/review", response_model=SessionReviewResponse)
+async def get_session_review(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get a completed session for review: full transcript, scoring breakdown, and personality reveal."""
+    session = db.query(DBSession).filter(DBSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    # Allow owner or admin to review
+    if session.user_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    scenario = db.query(Scenario).filter(Scenario.id == session.scenario_id).first()
+    personality = db.query(PersonalityTemplate).filter(
+        PersonalityTemplate.id == scenario.personality_template_id
+    ).first()
+    trait_set = db.query(TraitSet).filter(TraitSet.id == scenario.trait_set_id).first()
+
+    objectives = db.query(SessionObjective).filter(
+        SessionObjective.session_id == session_id
+    ).all()
+    objectives_response = [
+        SessionObjectiveResponse(
+            id=so.id,
+            objective=ObjectiveResponse.model_validate(so.objective),
+            achieved=so.achieved,
+            points_awarded=so.points_awarded,
+            notes=so.notes,
+            achieved_at=so.achieved_at
+        )
+        for so in objectives
+    ]
+
+    messages = db.query(Message).filter(
+        Message.session_id == session_id
+    ).order_by(Message.created_at).all()
+    messages_response = [MessageResponse.model_validate(m) for m in messages]
+
+    score_events = db.query(SessionScoreEvent).filter(
+        SessionScoreEvent.session_id == session_id
+    ).order_by(SessionScoreEvent.created_at).all()
+    score_events_response = [SessionScoreEventResponse.model_validate(e) for e in score_events]
+
+    return SessionReviewResponse(
+        id=session.id,
+        scenario_id=session.scenario_id,
+        scenario_title=scenario.title,
+        status=session.status,
+        final_score=session.score,
+        appointment_set=session.appointment_set,
+        started_at=session.started_at,
+        ended_at=session.ended_at,
+        disc_type=scenario.disc_type,
+        personality=PersonalityTemplateResponse.model_validate(personality),
+        trait_set=TraitSetResponse.model_validate(trait_set),
+        objectives=objectives_response,
+        messages=messages_response,
+        score_events=score_events_response,
+    )
 
 
 @router.get("/{session_id}", response_model=dict)
