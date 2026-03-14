@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/scenarios", tags=["scenarios"])
 @router.get("", response_model=list[ScenarioListResponse])
 async def list_scenarios(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """List all public scenarios + user's own private scenarios."""
-    public_scenarios = db.query(Scenario).filter(Scenario.is_public == True).all()
+    public_scenarios = db.query(Scenario).filter(Scenario.visibility == "public").all()
     user_scenarios = db.query(Scenario).filter(
         Scenario.created_by_user_id == current_user.id
     ).all()
@@ -25,7 +25,7 @@ async def list_scenarios(db: Session = Depends(get_db), current_user: User = Dep
 async def get_random_scenario(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Get a random scenario (public or user's own)."""
     # Get public scenarios
-    public_scenarios = db.query(Scenario).filter(Scenario.is_public == True).all()
+    public_scenarios = db.query(Scenario).filter(Scenario.visibility == "public").all()
     
     # Also include user's own scenarios
     user_scenarios = db.query(Scenario).filter(
@@ -54,8 +54,8 @@ async def get_scenario(scenario_id: int, db: Session = Depends(get_db), current_
             detail="Scenario not found"
         )
     
-    # Check permissions
-    if not scenario.is_public and scenario.created_by_user_id != current_user.id:
+    # Check permissions: allow if public or user is creator
+    if scenario.visibility != "public" and scenario.created_by_user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied"
@@ -98,7 +98,7 @@ async def create_scenario(
         trait_set_id=scenario_data.trait_set_id,
         scenario_context_id=scenario_data.scenario_context_id,
         ai_system_prompt=scenario_data.ai_system_prompt,
-        is_public=False,  # User-created scenarios start private
+        visibility="personal",  # User-created scenarios start private
         created_by_user_id=current_user.id
     )
     db.add(new_scenario)

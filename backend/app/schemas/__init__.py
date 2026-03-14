@@ -137,7 +137,7 @@ class ScenarioListResponse(BaseModel):
     title: str
     disc_type: str
     transaction_type: Optional[str] = None
-    is_public: bool
+    visibility: str  # "personal", "org", "public"
     created_at: datetime
 
     class Config:
@@ -156,7 +156,8 @@ class ScenarioDetailResponse(BaseModel):
     scenario_context_id: int
     scenario_context: Optional[ScenarioContextResponse] = None
     ai_system_prompt: str
-    is_public: bool
+    visibility: str  # "personal", "org", "public"
+    org_id: Optional[int] = None
     created_by_user_id: Optional[int] = None
     objectives: List[ObjectiveResponse] = []
     created_at: datetime
