@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, Organization, OrgMember
-from app.schemas import UserRegister, UserLogin, UserSelfUpdate, UserPasswordReset, TokenResponse, UserResponse
+from app.schemas import UserRegister, UserLogin, UserSelfUpdate, UserPasswordReset, TokenResponse, UserResponse, OrgMemberCreate, OrgMemberResponse
 from app.utils import hash_password, verify_password, create_access_token, get_current_user
 from datetime import timedelta, datetime
 from app.config import get_settings
@@ -215,3 +215,115 @@ async def reset_password(
     # Build response with org info
     user_response = _build_user_response(user, db)
     return user_response
+
+
+# ===== Organization Member Management (org_admin only) =====
+
+def _require_org_admin(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Dependency to ensure user is an org admin."""
+    org_member = db.query(OrgMember).filter(
+        OrgMember.user_id == current_user.id,
+        OrgMember.is_active == True
+    ).first()
+    
+    if not org_member or org_member.org_role != "org_admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only organization admins can access this resource"
+        )
+    
+    return org_member
+
+
+@router.get("/org/members", response_model=list[OrgMemberResponse])
+async def list_org_members(
+    db: Session = Depends(get_db),
+    org_member: OrgMember = Depends(_require_org_admin)
+):
+    """List all active members of the user's organization."""
+    members = db.query(OrgMember).filter(
+        OrgMember.org_id == org_member.org_id,
+        OrgMember.is_active == True
+    ).order_by(OrgMember.joined_at.desc()).all()
+    
+    return [OrgMemberResponse.from_orm(m) for m in members]
+
+
+@router.post("/org/members", response_model=OrgMemberResponse)
+async def provision_org_member(
+    member_data: OrgMemberCreate,
+    db: Session = Depends(get_db),
+    org_member: OrgMember = Depends(_require_org_admin)
+):
+    """Provision a new organization member."""
+    # Check if email already exists
+    existing_user = db.query(User).filter(User.email == member_data.email).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Create new user with temp password
+    new_user = User(
+        email=member_data.email,
+        name=member_data.name,
+        password_hash=hash_password(member_data.temp_password),
+        role="user",
+        must_reset_password=True  # Force password reset on first login
+    )
+    db.add(new_user)
+    db.flush()  # Get the new user ID
+    
+    # Add to organization
+    new_member = OrgMember(
+        org_id=org_member.org_id,
+        user_id=new_user.id,
+        org_role=member_data.org_role
+    )
+    db.add(new_member)
+    db.commit()
+    db.refresh(new_member)
+    
+    return OrgMemberResponse.from_orm(new_member)
+
+
+@router.delete("/org/members/{user_id}")
+async def deactivate_org_member(
+    user_id: int,
+    db: Session = Depends(get_db),
+    org_member: OrgMember = Depends(_require_org_admin)
+):
+    """Deactivate an organization member."""
+    # Find the member to deactivate
+    member_to_remove = db.query(OrgMember).filter(
+        OrgMember.user_id == user_id,
+        OrgMember.org_id == org_member.org_id,
+        OrgMember.is_active == True
+    ).first()
+    
+    if not member_to_remove:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Member not found"
+        )
+    
+    # Cannot remove the only org_admin
+    if member_to_remove.org_role == "org_admin":
+        admin_count = db.query(OrgMember).filter(
+            OrgMember.org_id == org_member.org_id,
+            OrgMember.org_role == "org_admin",
+            OrgMember.is_active == True
+        ).count()
+        
+        if admin_count <= 1:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot remove the last organization admin"
+            )
+    
+    # Deactivate (soft delete) the member
+    member_to_remove.is_active = False
+    db.commit()
+    
+    return {"ok": True, "message": "Member deactivated"}
