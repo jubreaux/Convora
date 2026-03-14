@@ -51,6 +51,12 @@ class DioClient {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
+    // Print the error for debugging
+    print('[DIO ERROR] ${err.type}: ${err.message}');
+    if (err.response != null) {
+      print('[DIO ERROR] Status: ${err.response!.statusCode}');
+      print('[DIO ERROR] Body: ${err.response!.data}');
+    }
     handler.next(err);
   }
 

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, Tar
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:convora/core/api/convora_api.dart';
 import 'package:convora/core/config/app_config.dart';
+import 'package:dio/dio.dart';
 import 'dart:convert';
 import 'package:just_audio/just_audio.dart';
 
@@ -128,9 +129,26 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isLoading: false,
       );
     } catch (e) {
+      String errorMsg = e.toString();
+      if (e is DioException) {
+        if (e.response != null && e.response!.data is Map) {
+          errorMsg = e.response!.data['detail'] ?? 'Registration failed';
+        } else if (e.type == DioExceptionType.connectionTimeout) {
+          errorMsg = 'Connection timeout. Check server URL and network.';
+        } else if (e.type == DioExceptionType.receiveTimeout) {
+          errorMsg = 'Server response timeout.';
+        } else if (e.type == DioExceptionType.badResponse) {
+          errorMsg = e.response?.statusCode == 400
+              ? (e.response!.data['detail'] ?? 'Invalid input')
+              : 'Server error: ${e.response?.statusCode}';
+        } else if (e.type == DioExceptionType.connectionError) {
+          errorMsg =
+              'Connection error. Check server URL and network connectivity.';
+        }
+      }
       state = state.copyWith(
         isLoading: false,
-        error: e.toString(),
+        error: errorMsg,
       );
     }
   }
@@ -151,9 +169,26 @@ class AuthNotifier extends StateNotifier<AuthState> {
         isLoading: false,
       );
     } catch (e) {
+      String errorMsg = e.toString();
+      if (e is DioException) {
+        if (e.response != null && e.response!.data is Map) {
+          errorMsg = e.response!.data['detail'] ?? 'Login failed';
+        } else if (e.type == DioExceptionType.connectionTimeout) {
+          errorMsg = 'Connection timeout. Check server URL and network.';
+        } else if (e.type == DioExceptionType.receiveTimeout) {
+          errorMsg = 'Server response timeout.';
+        } else if (e.type == DioExceptionType.badResponse) {
+          errorMsg = e.response?.statusCode == 401
+              ? 'Invalid email or password'
+              : 'Server error: ${e.response?.statusCode}';
+        } else if (e.type == DioExceptionType.connectionError) {
+          errorMsg =
+              'Connection error. Check server URL and network connectivity.';
+        }
+      }
       state = state.copyWith(
         isLoading: false,
-        error: e.toString(),
+        error: errorMsg,
       );
     }
   }
