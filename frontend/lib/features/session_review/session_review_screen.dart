@@ -306,6 +306,13 @@ class SessionReviewScreen extends ConsumerWidget {
                     .map((m) => _MessageBubble(message: m)),
                 const SizedBox(height: 32),
 
+                // ── Vote Card ────────────────────────────────────────────
+                _ScenarioVoteCard(
+                  sessionId: sessionId,
+                  scenarioId: review.scenarioId,
+                ),
+                const SizedBox(height: 32),
+
                 // ── Retake Button ─────────────────────────────────────────
                 FilledButton.icon(
                   icon: const Icon(Icons.refresh),
@@ -320,8 +327,8 @@ class SessionReviewScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton(
-                  onPressed: () => context.go('/home'),
-                  child: const Text('Back to Home'),
+                  onPressed: () => context.go('/history'),
+                  child: const Text('Back to History'),
                 ),
                 const SizedBox(height: 24),
               ],
@@ -524,6 +531,175 @@ class _MessageBubble extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Vote Card Widget ──────────────────────────────────────────────────
+class _ScenarioVoteCard extends ConsumerStatefulWidget {
+  final int sessionId;
+  final int scenarioId;
+
+  const _ScenarioVoteCard({
+    required this.sessionId,
+    required this.scenarioId,
+  });
+
+  @override
+  ConsumerState<_ScenarioVoteCard> createState() => _ScenarioVoteCardState();
+}
+
+class _ScenarioVoteCardState extends ConsumerState<_ScenarioVoteCard> {
+  int? _currentVote;
+  final _commentController = TextEditingController();
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  void _submitVote() async {
+    setState(() => _isSubmitting = true);
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.submitFeedback(
+        sessionId: widget.sessionId,
+        vote: _currentVote ?? 0,
+        comment: _commentController.text.isEmpty ? null : _commentController.text,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Feedback submitted!')),
+        );
+        setState(() {
+          _isSubmitting = false;
+          _currentVote = null;
+          _commentController.clear();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.blue.shade50,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.thumb_up_outlined, color: Colors.blue),
+                const SizedBox(width: 8),
+                Text(
+                  'How was this scenario?',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Vote buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildVoteButton(
+                  icon: Icons.thumb_down,
+                  label: 'Dislike',
+                  vote: -1,
+                  isSelected: _currentVote == -1,
+                  color: Colors.red,
+                ),
+                const SizedBox(width: 16),
+                _buildVoteButton(
+                  icon: Icons.thumb_up,
+                  label: 'Like',
+                  vote: 1,
+                  isSelected: _currentVote == 1,
+                  color: Colors.green,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Comment field (condensed)
+            TextField(
+              controller: _commentController,
+              maxLines: 2,
+              decoration: InputDecoration(
+                hintText:'Optional comment',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: _isSubmitting ? null : _submitVote,
+              child: Text(_isSubmitting ? 'Submitting...' : 'Submit Feedback'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVoteButton({
+    required IconData icon,
+    required String label,
+    required int vote,
+    required bool isSelected,
+    required Color color,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _currentVote = _currentVote == vote ? null : vote;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.2) : Colors.transparent,
+          border: Border.all(
+            color: isSelected ? color : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: isSelected ? color : Colors.grey, size: 20),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: isSelected ? color : Colors.grey,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
