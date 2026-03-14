@@ -181,6 +181,7 @@ class SessionMessageRequest(BaseModel):
 class SessionMessageResponse(BaseModel):
     reply: str
     current_score: int
+    max_score: int
     objectives_completed: List[SessionObjectiveResponse]
     appointment_set: bool
     audio_base64: Optional[str] = None  # MP3 audio encoded as base64 (if voice=True)

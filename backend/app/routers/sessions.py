@@ -121,6 +121,12 @@ async def send_message(
         for so in completed_objectives
     ]
     
+    # Calculate max possible score - query with explicit join to ensure objectives are loaded
+    all_session_objectives = db.query(SessionObjective).join(Objective).filter(
+        SessionObjective.session_id == session_id
+    ).all()
+    max_score = sum(so.objective.max_points for so in all_session_objectives) if all_session_objectives else 0
+    
     # Synthesize audio if voice mode requested
     audio_base64 = None
     if request.voice:
@@ -138,6 +144,7 @@ async def send_message(
     return SessionMessageResponse(
         reply=result["reply"],
         current_score=session.score,
+        max_score=max_score,
         objectives_completed=objectives_completed,
         appointment_set=session.appointment_set,
         audio_base64=audio_base64

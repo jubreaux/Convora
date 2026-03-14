@@ -268,6 +268,7 @@ class ActiveSessionState {
   final String scenarioTitle;  // NEW: Store the scenario title for display
   final List<SessionMessage> messages;
   final int currentScore;
+  final int maxScore;
   final bool appointmentSet;
   final List<SessionObjective> objectivesCompleted;
   final SessionEndResponse? sessionEndData;
@@ -284,6 +285,7 @@ class ActiveSessionState {
     this.scenarioTitle = '',  // NEW: Default empty
     this.messages = const [],
     this.currentScore = 0,
+    this.maxScore = 0,
     this.appointmentSet = false,
     this.objectivesCompleted = const [],
     this.sessionEndData,
@@ -301,6 +303,7 @@ class ActiveSessionState {
     String? scenarioTitle,  // NEW
     List<SessionMessage>? messages,
     int? currentScore,
+    int? maxScore,
     bool? appointmentSet,
     List<SessionObjective>? objectivesCompleted,
     SessionEndResponse? sessionEndData,
@@ -317,6 +320,7 @@ class ActiveSessionState {
       scenarioTitle: scenarioTitle ?? this.scenarioTitle,  // NEW
       messages: messages ?? this.messages,
       currentScore: currentScore ?? this.currentScore,
+      maxScore: maxScore ?? this.maxScore,
       appointmentSet: appointmentSet ?? this.appointmentSet,
       objectivesCompleted: objectivesCompleted ?? this.objectivesCompleted,
       sessionEndData: sessionEndData ?? this.sessionEndData,
@@ -452,6 +456,7 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
       state = state.copyWith(
         messages: [...state.messages, assistantMsg],
         currentScore: response.currentScore,
+        maxScore: response.maxScore,
         objectivesCompleted: response.objectivesCompleted,
         appointmentSet: response.appointmentSet,
         isLoading: false,

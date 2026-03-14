@@ -229,6 +229,7 @@ class SessionObjective {
 class SessionMessageResponse {
   final String reply;
   final int currentScore;
+  final int maxScore;
   final List<SessionObjective> objectivesCompleted;
   final bool appointmentSet;
   final String? audioBase64;  // MP3 audio encoded as base64 (if voice=true)
@@ -236,6 +237,7 @@ class SessionMessageResponse {
   SessionMessageResponse({
     required this.reply,
     required this.currentScore,
+    required this.maxScore,
     required this.objectivesCompleted,
     required this.appointmentSet,
     this.audioBase64,
@@ -245,6 +247,7 @@ class SessionMessageResponse {
     return SessionMessageResponse(
       reply: json['reply'] as String,
       currentScore: json['current_score'] as int,
+      maxScore: (json['max_score'] as int?) ?? 0,
       objectivesCompleted: (json['objectives_completed'] as List)
           .map((e) => SessionObjective.fromJson(e as Map<String, dynamic>))
           .toList(),

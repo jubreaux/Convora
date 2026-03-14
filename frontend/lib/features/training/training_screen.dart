@@ -239,14 +239,19 @@ class _TrainingSessionScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(sessionState.scenarioTitle ?? 'Training Session'),
+        title: Text(
+          sessionState.scenarioTitle ?? 'Training Session',
+          style: const TextStyle(fontSize: 14),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: Container(
               padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 2,
+                horizontal: 16,
+                vertical: 6,
               ),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -259,15 +264,15 @@ class _TrainingSessionScreenState
                   const Text(
                     'Score',
                     style: TextStyle(
-                      fontSize: 8,
+                      fontSize: 10,
                       color: Colors.teal,
                       height: 1.0,
                     ),
                   ),
                   Text(
-                    '${sessionState.currentScore}',
+                    '${sessionState.currentScore}/${sessionState.maxScore}',
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.teal,
                       height: 1.0,
