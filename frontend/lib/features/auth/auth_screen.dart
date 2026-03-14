@@ -55,6 +55,8 @@ Future<void> showServerDialog(BuildContext context, WidgetRef ref) async {
 
 void _saveAndPop(
     BuildContext ctx, TextEditingController ctrl, WidgetRef ref) {
+  // Guard against double-pop (e.g. keyboard "Done" + Save button both firing)
+  if (!Navigator.of(ctx).canPop()) return;
   final url = ctrl.text.trim();
   if (url.isNotEmpty) {
     ref.read(serverConfigProvider.notifier).setUrl(url);
