@@ -17,6 +17,7 @@ def create_test_users(db: Session):
             {"email": "admin@example.com", "name": "Admin User", "password": "password123", "role": "admin"},
             {"email": "test@example.com", "name": "Test User", "password": "password123", "role": "user"},
             {"email": "demo@example.com", "name": "Demo User", "password": "demo123", "role": "user"},
+            {"email": "apitest@example.com", "name": "API Test User", "password": "password123", "role": "user"},
         ]
         
         created_count = 0

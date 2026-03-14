@@ -147,17 +147,16 @@ def seed_data(_init_db):
 
 @pytest.fixture(scope="session")
 def test_user(_init_db):
-    """Get the real test user from the database."""
+    """Get the real API test user from the database."""
     db = TestSessionLocal()
     try:
-        # Use the real test user created in seed data
-        user = db.query(User).filter(User.email == "test@example.com").first()
+        # Use dedicated API test user
+        user = db.query(User).filter(User.email == "apitest@example.com").first()
         if not user:
-            # Create if it doesn't exist
             user = User(
-                email="test@example.com",
+                email="apitest@example.com",
                 password_hash=hash_password("password123"),
-                name="Test User",
+                name="API Test User",
                 role="user",
             )
             db.add(user)

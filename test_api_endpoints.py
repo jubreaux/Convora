@@ -325,6 +325,18 @@ def test_multi_turn_conversation(session_id):
         print(f"  Session Score (Turn 2): {data2.get('current_score', 0)}")
         print(f"  Objectives Completed:   {len(data2.get('objectives_completed', []))}")
         
+        # End the session so it appears in dashboard counts
+        print("\n  ╔════════════════════════════════════════════════════════╗")
+        print("  ║         ENDING SESSION                                 ║")
+        print("  ╚════════════════════════════════════════════════════════╝")
+        
+        end_response = requests.post(f"{BASE_URL}/api/sessions/{session_id}/end", headers=headers)
+        if end_response.status_code == 200:
+            end_data = end_response.json()
+            print(f"\n  ✓ Session ended | Final Score: {end_data.get('final_score', 0)}")
+        else:
+            print(f"\n  ✗ Failed to end session: {end_response.status_code}")
+        
         result = True
         print_test("Multi-turn conversation", result, "Successfully exchanged 2 messages with context")
         return result
