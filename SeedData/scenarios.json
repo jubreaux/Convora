@@ -1,11 +1,14 @@
 {
     "Scenarios": [
-        "Job Interview",
-        "Restaurant",
-        "Coffee Shop",
-        "Airport",
-        "Hotel",
-        "Store",
-        "Doctor's Office"
+        "Open House",
+        "Initial Buyer Consultation",
+        "Listing Appointment",
+        "Outbound Call - Expired Listing",
+        "Outbound Call - FSBO",
+        "Property Showing",
+        "Follow-up Call",
+        "Offer Negotiation",
+        "Referral Introduction",
+        "Sphere of Influence Call"
     ]
 }

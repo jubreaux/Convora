@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 import os
 
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://localhost:8400"
 HEADERS = {"Content-Type": "application/json"}
 
 # Test data - use pre-seeded test accounts
@@ -74,51 +74,6 @@ def test_login():
             return result
     except Exception as e:
         print_test("POST /api/auth/login", False, f"Error: {str(e)}")
-        return False
-
-
-def test_list_claude_models():
-    """List available Claude models from Anthropic API."""
-    print_section("ANTHROPIC - AVAILABLE MODELS")
-    
-    try:
-        # Call backend endpoint to list models
-        response = requests.get(f"{BASE_URL}/api/models", headers=HEADERS, timeout=10)
-        
-        if response.status_code == 200:
-            data = response.json()
-            models = data.get("available_models", [])
-            
-            result = len(models) > 0
-            print_test("List Available Models", result, f"Found {len(models)} models")
-            
-            if models:
-                print("\nAvailable Claude Models:")
-                for model in models:
-                    print(f"  - {model}")
-            
-            return result
-        else:
-            print_test("List Available Models", False, f"Status: {response.status_code}")
-            print("Note: Backend endpoint /api/models not yet implemented")
-            print("Displaying commonly available models:")
-            common_models = [
-                "claude-sonnet-4-20250514",
-                "claude-opus-4-1-20250805",
-                "claude-haiku-4-5-20251001",
-                "claude-opus-4-6",
-                "claude-opus-4-5-20251101"
-            ]
-            for model in common_models:
-                print(f"  - {model}")
-            return False
-            
-    except Exception as e:
-        print_test("List Available Models", False, f"Error: {str(e)}")
-        print("\nCommon Claude 4 models to try:")
-        print("  - claude-sonnet-4-20250514 ✓ (Currently using this)")
-        print("  - claude-opus-4-1-20250805")
-        print("  - claude-haiku-4-5-20251001")
         return False
 
 
@@ -261,6 +216,58 @@ def test_send_message(session_id):
         return False
 
 
+def test_send_message_with_audio(session_id):
+    """Test sending message with text-to-speech audio response."""
+    print_section("7.1 SESSIONS - SEND MESSAGE WITH AUDIO (TTS)")
+    
+    if not auth_token:
+        print_test(f"POST /api/sessions/{session_id}/messages (with audio)", False, "No auth token available")
+        return False
+    
+    try:
+        headers = {**HEADERS, "Authorization": f"Bearer {auth_token}"}
+        payload = {"message": "Can you help me find a home in this area?", "voice": True}
+        response = requests.post(f"{BASE_URL}/api/sessions/{session_id}/messages", json=payload, headers=headers)
+        result = response.status_code == 200
+        
+        if result:
+            data = response.json()
+            audio_base64 = data.get('audio_base64')
+            client_response = data.get('reply', 'N/A')
+            
+            # Check if audio is present and valid
+            audio_present = audio_base64 is not None and len(audio_base64) > 0
+            
+            if audio_present:
+                # Audio is properly base64 encoded
+                try:
+                    audio_bytes = json.loads(json.dumps(audio_base64))  # Ensure it's a string
+                    # Validate it's valid base64 by attempting decode
+                    import base64
+                    decoded = base64.b64decode(audio_base64)
+                    audio_size_kb = len(decoded) / 1024
+                    print_test(f"POST /api/sessions/{session_id}/messages (voice=True)", result, 
+                             f"Audio received ({audio_size_kb:.1f}KB)")
+                    print(f"       Response: {client_response[:60]}...")
+                    print(f"       Audio Base64: {audio_base64[:50]}... (truncated)")
+                except Exception as decode_error:
+                    print_test(f"POST /api/sessions/{session_id}/messages (voice=True)", False, 
+                             f"Audio is not valid base64: {str(decode_error)}")
+                    return False
+            else:
+                print_test(f"POST /api/sessions/{session_id}/messages (voice=True)", False, 
+                         "No audio returned (OpenAI API key may not be configured)")
+                return False
+        else:
+            error_detail = response.json().get('detail', 'Unknown error')
+            print_test(f"POST /api/sessions/{session_id}/messages (voice=True)", False, 
+                     f"Status: {response.status_code}, Error: {error_detail}")
+        return result
+    except Exception as e:
+        print_test(f"POST /api/sessions/{session_id}/messages (voice=True)", False, f"Error: {str(e)}")
+        return False
+
+
 def test_multi_turn_conversation(session_id):
     """Test a multi-turn conversation with the client."""
     print_section("7.5 SESSIONS - MULTI-TURN CONVERSATION")
@@ -376,9 +383,6 @@ def main():
     # Test health
     results['health'] = test_health()
     
-    # List available Claude models
-    results['list_models'] = test_list_claude_models()
-    
     # Test auth (skip register since we're using pre-seeded users, only test login)
     results['login'] = test_login()
     
@@ -417,6 +421,7 @@ def main():
             
             if success and session_data:
                 results['send_message'] = test_send_message(session_data['session_id'])
+                results['send_message_with_audio'] = test_send_message_with_audio(session_data['session_id'])
                 results['multi_turn_conversation'] = test_multi_turn_conversation(session_data['session_id'])
     
     # Summary

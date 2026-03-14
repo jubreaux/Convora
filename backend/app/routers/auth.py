@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
 from app.schemas import UserRegister, UserLogin, TokenResponse, UserResponse
-from app.utils import hash_password, verify_password, create_access_token
+from app.utils import hash_password, verify_password, create_access_token, get_current_user
 from datetime import timedelta
 from app.config import get_settings
 
@@ -82,3 +82,9 @@ async def login(user_data: UserLogin, db: Session = Depends(get_db)):
         "token_type": "bearer",
         "user": UserResponse.model_validate(user)
     }
+
+
+@router.get("/me", response_model=UserResponse)
+async def me(current_user: User = Depends(get_current_user)):
+    """Get current user from token."""
+    return current_user

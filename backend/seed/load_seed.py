@@ -14,28 +14,155 @@ def create_test_users(db: Session):
         from app.utils import hash_password
         
         test_users = [
-            {"email": "test@example.com", "name": "Test User", "password": "password123"},
-            {"email": "demo@example.com", "name": "Demo User", "password": "demo123"},
+            {"email": "admin@example.com", "name": "Admin User", "password": "password123", "role": "admin"},
+            {"email": "test@example.com", "name": "Test User", "password": "password123", "role": "user"},
+            {"email": "demo@example.com", "name": "Demo User", "password": "demo123", "role": "user"},
         ]
         
         created_count = 0
         for user_data in test_users:
-            if db.query(User).filter(User.email == user_data["email"]).first() is None:
+            existing_user = db.query(User).filter(User.email == user_data["email"]).first()
+            if existing_user is None:
                 user = User(
                     email=user_data["email"],
                     name=user_data["name"],
-                    password_hash=hash_password(user_data["password"])
+                    password_hash=hash_password(user_data["password"]),
+                    role=user_data.get("role", "user")
                 )
                 db.add(user)
+                created_count += 1
+            else:
+                # Update existing user password, name, and role
+                existing_user.password_hash = hash_password(user_data["password"])
+                existing_user.name = user_data["name"]
+                existing_user.role = user_data.get("role", "user")
                 created_count += 1
         
         if created_count > 0:
             db.commit()
-            print(f"✓ Created {created_count} test user accounts")
+            print(f"✓ Updated/Created {created_count} test user accounts")
             return created_count
         return 0
     except Exception as e:
         print(f"✗ Error creating test users: {e}")
+        db.rollback()
+        raise
+
+
+def seed_scenarios(db: Session, _read_json_file=None):
+    """Seed scenarios from ScenarioDefinitions.json. Safe to call on existing DB."""
+    if _read_json_file is None:
+        # Use the function from seed_database scope if available
+        def _read_json_file(path):
+            if not os.path.exists(path):
+                return None
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except UnicodeDecodeError:
+                try:
+                    with open(path, 'r', encoding='utf-16') as f:
+                        return json.load(f)
+                except UnicodeDecodeError:
+                    with open(path, 'rb') as f:
+                        raw = f.read()
+                        text = raw.decode('utf-8', errors='replace')
+                        try:
+                            return json.loads(text)
+                        except Exception as e:
+                            print(f"✗ Failed to parse JSON at {path}: {e}")
+                            return None
+            except json.JSONDecodeError as e:
+                print(f"✗ JSON decode error for {path}: {e}")
+                return None
+            except Exception as e:
+                print(f"✗ Error reading {path}: {e}")
+                return None
+    
+    try:
+        # Count existing scenarios
+        existing_count = db.query(Scenario).count()
+        target_count = 8
+        
+        if existing_count >= target_count:
+            print(f"✓ Scenarios already seeded ({existing_count} >= {target_count}). Skipping.")
+            return
+        
+        # Load scenario definitions
+        scenarios_path = os.path.join(
+            os.path.dirname(__file__),
+            "../SeedData/ScenarioDefinitions.json"
+        )
+        scenarios_data = _read_json_file(scenarios_path)
+        
+        if not scenarios_data:
+            print(f"✗ Could not load ScenarioDefinitions.json from {scenarios_path}")
+            return
+        
+        # Get test user
+        test_user = db.query(User).filter(User.email == "test@example.com").first()
+        if not test_user:
+            print("✗ Test user not found. Cannot seed scenarios.")
+            return
+        
+        created_count = 0
+        for scenario_def in scenarios_data.get("Scenarios", []):
+            # Check if scenario already exists by title
+            if db.query(Scenario).filter(Scenario.title == scenario_def.get("title")).first() is not None:
+                continue
+            
+            # Resolve foreign keys by name/number lookups
+            try:
+                # Lookup ScenarioContext by name
+                context = db.query(ScenarioContext).filter(
+                    ScenarioContext.name == scenario_def.get("context_name")
+                ).first()
+                if not context:
+                    print(f"✗ ScenarioContext not found: {scenario_def.get('context_name')}")
+                    continue
+                
+                # Lookup TraitSet by number
+                trait_set = db.query(TraitSet).filter(
+                    TraitSet.trait_set_number == scenario_def.get("trait_set_number")
+                ).first()
+                if not trait_set:
+                    print(f"✗ TraitSet not found: {scenario_def.get('trait_set_number')}")
+                    continue
+                
+                # Lookup PersonalityTemplate by occupation
+                personality = db.query(PersonalityTemplate).filter(
+                    PersonalityTemplate.occupation == scenario_def.get("personality_occupation")
+                ).first()
+                if not personality:
+                    print(f"✗ PersonalityTemplate not found: {scenario_def.get('personality_occupation')}")
+                    continue
+                
+                # Create scenario
+                scenario = Scenario(
+                    title=scenario_def.get("title"),
+                    disc_type=scenario_def.get("disc_type"),
+                    personality_template_id=personality.id,
+                    trait_set_id=trait_set.id,
+                    scenario_context_id=context.id,
+                    ai_system_prompt=scenario_def.get("ai_system_prompt", ""),
+                    is_public=scenario_def.get("is_public", True),
+                    created_by_user_id=test_user.id,
+                )
+                db.add(scenario)
+                created_count += 1
+            
+            except Exception as e:
+                print(f"✗ Error creating scenario '{scenario_def.get('title')}': {e}")
+                continue
+        
+        if created_count > 0:
+            db.commit()
+            print(f"✓ Created {created_count} scenarios ({existing_count + created_count} total)")
+        else:
+            print("✓ All scenarios already exist.")
+    
+    except Exception as e:
+        print(f"✗ Error seeding scenarios: {e}")
         db.rollback()
         raise
 
@@ -51,10 +178,11 @@ def seed_database():
     try:
         # Check if already seeded
         if db.query(PersonalityTemplate).first() is not None:
-            print("Database already seeded. Skipping.")
-            # Still try to create test users if they don't exist
-            if db.query(User).first() is None:
-                create_test_users(db)
+            print("Database already seeded. Skipping JSON sources.")
+            # Always ensure test users exist and have correct roles
+            create_test_users(db)
+            # Always seed scenarios in case new ones are defined
+            seed_scenarios(db)
             return
         
         print("Seeding database...")
@@ -182,50 +310,8 @@ def seed_database():
         # Create test user accounts
         create_test_users(db)
         
-        # Create public test scenarios (if any users exist)
-        if db.query(User).first() is not None:
-            test_scenarios = [
-                {
-                    "title": "Real Estate Sales Call",
-                    "disc_type": "D",
-                    "personality_template_id": 1,
-                    "trait_set_id": 1,
-                    "scenario_context_id": 1,
-                    "ai_system_prompt": "You are a professional sales consultant handling a real estate inquiry.",
-                    "is_public": True,
-                },
-                {
-                    "title": "Customer Support Interaction",
-                    "disc_type": "I",
-                    "personality_template_id": 2,
-                    "trait_set_id": 2,
-                    "scenario_context_id": 1,
-                    "ai_system_prompt": "You are a friendly customer support representative.",
-                    "is_public": True,
-                },
-            ]
-            
-            created_scenarios = 0
-            test_user = db.query(User).filter(User.email == "test@example.com").first()
-            if test_user:
-                for scenario_data in test_scenarios:
-                    if db.query(Scenario).filter(Scenario.title == scenario_data["title"]).first() is None:
-                        scenario = Scenario(
-                            title=scenario_data["title"],
-                            disc_type=scenario_data["disc_type"],
-                            personality_template_id=scenario_data.get("personality_template_id", 1),
-                            trait_set_id=scenario_data.get("trait_set_id", 1),
-                            scenario_context_id=scenario_data.get("scenario_context_id", 1),
-                            ai_system_prompt=scenario_data.get("ai_system_prompt", ""),
-                            is_public=scenario_data["is_public"],
-                            created_by_user_id=test_user.id,
-                        )
-                        db.add(scenario)
-                        created_scenarios += 1
-                
-                if created_scenarios > 0:
-                    db.commit()
-                    print(f"✓ Created {created_scenarios} test scenarios")
+        # Seed scenarios from definition file
+        seed_scenarios(db)
         
         print("✓ Database seeding complete!")
     

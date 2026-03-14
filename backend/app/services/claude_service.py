@@ -7,7 +7,7 @@ from anthropic import Anthropic
 from sqlalchemy.orm import Session
 from app.models import (
     Session as DBSession, Message, SessionObjective, Objective, 
-    Scenario, PersonalityTemplate, TraitSet, FinetuneExample
+    Scenario, PersonalityTemplate, TraitSet, SessionScoreEvent
 )
 from app.config import get_settings
 from app.tools import CONVERSATION_TOOLS
@@ -26,8 +26,7 @@ def build_system_prompt(
     db: Session,
     scenario: Scenario,
     personality: PersonalityTemplate,
-    trait_set,
-    finetune_examples: List[Dict[str, str]]
+    trait_set
 ) -> str:
     """
     Build the system prompt for Claude that includes:
@@ -233,6 +232,13 @@ def process_tool_call(
         reason = tool_input.get("reason", "Bonus awarded")
         
         db_session.score += amount
+        db.add(SessionScoreEvent(
+            session_id=db_session.id,
+            event_type="bonus",
+            points=amount,
+            label="Bonus Points",
+            reason=reason
+        ))
         db.commit()
         
         return {
@@ -249,6 +255,13 @@ def process_tool_call(
         # Award 5 points for DISC alignment (can be called multiple times)
         points = 5
         db_session.score += points
+        db.add(SessionScoreEvent(
+            session_id=db_session.id,
+            event_type="disc_alignment",
+            points=points,
+            label=f"DISC Alignment ({disc_type})",
+            reason=example
+        ))
         db.commit()
         
         return {
@@ -313,12 +326,8 @@ async def send_message_to_client(
     ).first()
     trait_set = db.query(TraitSet).filter(TraitSet.id == scenario.trait_set_id).first()
     
-    # Load finetune examples
-    finetune_examples = db.query(FinetuneExample).all()
-    finetune_list = [{"prompt": ex.prompt, "completion": ex.completion} for ex in finetune_examples]
-    
     # Build system prompt
-    system_prompt = build_system_prompt(db, scenario, personality, trait_set, finetune_list)
+    system_prompt = build_system_prompt(db, scenario, personality, trait_set)
     
     # Get conversation history
     messages = db.query(Message).filter(Message.session_id == db_session.id).all()

@@ -33,6 +33,21 @@ class UserLogin(BaseModel):
     password: str
 
 
+class UserUpdate(BaseModel):
+    """Schema for updating user details (admin only)."""
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None  # If provided, will be hashed
+    role: Optional[str] = None  # "user" or "admin"
+
+
+class UserDeleteResponse(BaseModel):
+    """Response when a user is soft-deleted."""
+    message: str
+    user_id: int
+    deleted_at: datetime
+
+
 # ===== Scenario Schemas =====
 class PersonalityTemplateResponse(BaseModel):
     id: int

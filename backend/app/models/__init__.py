@@ -13,6 +13,7 @@ class User(Base):
     name = Column(String(255), nullable=False)
     role = Column(String(50), default="user", nullable=False)  # "user" or "admin"
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    is_deleted = Column(Boolean, default=False, nullable=False)
 
     # Relationships
     scenarios = relationship("Scenario", back_populates="created_by", foreign_keys="Scenario.created_by_user_id")
@@ -131,6 +132,7 @@ class Session(Base):
     scenario = relationship("Scenario", back_populates="sessions")
     messages = relationship("Message", back_populates="session", cascade="all, delete-orphan")
     session_objectives = relationship("SessionObjective", back_populates="session", cascade="all, delete-orphan")
+    score_events = relationship("SessionScoreEvent", back_populates="session", cascade="all, delete-orphan")
 
 
 class SessionObjective(Base):
@@ -160,3 +162,19 @@ class Message(Base):
 
     # Relationships
     session = relationship("Session", back_populates="messages")
+
+
+class SessionScoreEvent(Base):
+    """Audit log for every score mutation — objective completions, bonuses, and DISC alignment."""
+    __tablename__ = "session_score_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("sessions.id"), nullable=False)
+    event_type = Column(String(50), nullable=False)  # "objective", "bonus", "disc_alignment"
+    points = Column(Integer, nullable=False)
+    label = Column(String(255), nullable=True)
+    reason = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    # Relationships
+    session = relationship("Session", back_populates="score_events")
