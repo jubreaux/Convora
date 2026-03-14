@@ -111,6 +111,16 @@ export interface SessionDetail extends Session {
   messages: Message[];
 }
 
+export interface SessionHistory {
+  id: number;
+  scenario_id: number;
+  scenario_title: string;
+  status: string;
+  score: number;
+  started_at: string;
+  ended_at?: string | null;
+}
+
 // Admin Dashboard Types
 export interface UserStats {
   id: number;

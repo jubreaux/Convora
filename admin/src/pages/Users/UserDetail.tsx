@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader, Edit2, Trash2 } from 'lucide-react';
 import api from '../../services/api';
-import { UserStats, SessionDetail, User } from '../../types';
+import { UserStats, SessionHistory, User } from '../../types';
 import { toast } from 'react-toastify';
 import { UserEditModal } from '../../components/UserEditModal';
 import { UserDeleteConfirm } from '../../components/UserDeleteConfirm';
@@ -11,7 +11,7 @@ const UserDetail: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const [user, setUser] = useState<UserStats | null>(null);
-  const [sessions, setSessions] = useState<SessionDetail[]>([]);
+  const [sessions, setSessions] = useState<SessionHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -172,7 +172,7 @@ const UserDetail: React.FC = () => {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">ID</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Scenario</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
                 <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">Score</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
@@ -185,7 +185,7 @@ const UserDetail: React.FC = () => {
                   className="hover:bg-gray-50 cursor-pointer"
                   onClick={() => navigate(`/sessions/${session.id}`)}
                 >
-                  <td className="px-6 py-4 text-sm text-gray-900">#{session.id}</td>
+                  <td className="px-6 py-4 text-sm text-gray-900 font-medium">{session.scenario_title}</td>
                   <td className="px-6 py-4 text-sm">
                     <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
                       session.status === 'completed'

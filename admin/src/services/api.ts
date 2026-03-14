@@ -13,6 +13,7 @@ import {
   UserStats,
   PaginationParams,
   SessionDetail,
+  SessionHistory,
   SessionReview,
 } from '../types';
 
@@ -113,8 +114,8 @@ class ApiClient {
     return response.data;
   }
 
-  async getUserSessions(userId: number): Promise<SessionDetail[]> {
-    const response = await this.api.get<SessionDetail[]>(`/api/sessions/users/${userId}/history`);
+  async getUserSessions(userId: number): Promise<SessionHistory[]> {
+    const response = await this.api.get<SessionHistory[]>(`/api/sessions/users/${userId}/history`);
     return response.data;
   }
 
