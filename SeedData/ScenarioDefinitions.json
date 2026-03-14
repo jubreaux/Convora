@@ -94,6 +94,7 @@
       "trait_set_number": 4,
       "is_public": true,
       "objectives": [
+        "Did the agent say hello?",
         "Did ISA provide market analysis and valuation information?",
         "Did ISA acknowledge emotional aspect of leaving home?",
         "Did ISA understand and emphasize quality over speed?",

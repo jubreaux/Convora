@@ -172,3 +172,91 @@ def auth_headers(test_user):
         expires_delta=timedelta(minutes=60),
     )
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture(scope="session")
+def recent_retiree_scenario(_init_db, test_user):
+    """
+    Fixture for Recent Retiree scenario with 'Did the agent say hello?' objective.
+    Used for testing objective completion and scoring.
+    """
+    db = TestSessionLocal()
+    try:
+        # Create personality for Recent Retiree
+        personality = PersonalityTemplate(
+            occupation="Retired Teacher",
+            family="Married couple (Patricia and Michael Grant, 67)",
+            pets="Cat and dog",
+            recreation="Gardening, travel, grandchildren visits",
+            transaction_type="Sell & Buy Downsized",
+            surface_motivation="Want to downsize to a quality, secure home",
+            hidden_motivation="Testing if ISA understands their emotional attachment to the family home",
+            timeframe="3-6 months",
+            buy_criteria="Quality construction, security, community amenities",
+            red_flags="Will stall if pressured; wants data-driven analysis",
+        )
+        db.add(personality)
+        db.flush()
+
+        # Create trait set for C-type (Conscientious)
+        trait_set = TraitSet(
+            trait_set_number=4,
+            trait_1="Analytical",
+            trait_2="Quality-focused",
+            trait_3="Methodical",
+        )
+        db.add(trait_set)
+        db.flush()
+
+        # Create scenario context
+        context = ScenarioContext(name="Listing Appointment")
+        db.add(context)
+        db.flush()
+
+        # Create Recent Retiree scenario
+        scenario = Scenario(
+            title="Recent Retiree – Quality Home Downsizer",
+            disc_type="C",
+            personality_template_id=personality.id,
+            trait_set_id=trait_set.id,
+            scenario_context_id=context.id,
+            ai_system_prompt=(
+                "You are a recently retired couple (Patricia and Michael Grant, 67) "
+                "seeking a downsized home with quality amenities and security. "
+                "Be analytical, quality-focused, and methodical. Request comprehensive documentation."
+            ),
+            is_public=True,
+            created_by_user_id=test_user.id,
+        )
+        db.add(scenario)
+        db.flush()
+
+        # Create objectives for this scenario
+        objectives_data = [
+            ("Did the agent say hello?", "ISA greets warmly and professionally at the start"),
+            ("Did ISA provide market analysis and valuation information?", "ISA shares market data and home valuation"),
+            ("Did ISA acknowledge emotional aspect of leaving home?", "ISA recognizes the emotional component"),
+            ("Did ISA understand and emphasize quality over speed?", "ISA prioritizes quality and takes time"),
+        ]
+        
+        objectives = []
+        for label, description in objectives_data:
+            obj = Objective(
+                scenario_id=scenario.id,
+                label=label,
+                description=description,
+                max_points=10,
+            )
+            db.add(obj)
+            objectives.append(obj)
+        
+        db.commit()
+        
+        return {
+            "scenario_id": scenario.id,
+            "scenario_title": scenario.title,
+            "disc_type": scenario.disc_type,
+            "objectives": [(o.id, o.label) for o in objectives],
+        }
+    finally:
+        db.close()
