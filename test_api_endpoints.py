@@ -9,10 +9,10 @@ import os
 BASE_URL = "http://localhost:8400"
 HEADERS = {"Content-Type": "application/json"}
 
-# Test data - use pre-seeded test accounts
-test_user_email = "test@example.com"
+# Test data - use dedicated API test account
+test_user_email = "apitest@example.com"
 test_user_password = "password123"
-test_user_name = "Test User"
+test_user_name = "API Test User"
 
 auth_token = None
 user_id = None
