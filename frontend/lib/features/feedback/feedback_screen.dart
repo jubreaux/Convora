@@ -3,8 +3,62 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:convora/core/providers/providers.dart';
 
-class FeedbackScreen extends ConsumerWidget {
+class FeedbackScreen extends ConsumerStatefulWidget {
   const FeedbackScreen({super.key});
+
+  @override
+  ConsumerState<FeedbackScreen> createState() => _FeedbackScreenState();
+}
+
+class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
+  int? _currentVote;  // -1, 0, or 1
+  final _commentController = TextEditingController();
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  void _submitFeedback() async {
+    final sessionState = ref.read(activeSessionProvider);
+    if (sessionState.sessionId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error: No active session')),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      await apiClient.submitFeedback(
+        sessionId: sessionState.sessionId!,
+        vote: _currentVote ?? 0,
+        comment: _commentController.text.isEmpty ? null : _commentController.text,
+      );
+
+      if (mounted) {
+        // Reset session state and navigate to dashboard
+        ref.read(activeSessionProvider.notifier).reset();
+        context.go('/dashboard');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error submitting feedback: $e')),
+        );
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
+
+  void _skip() {
+    ref.read(activeSessionProvider.notifier).reset();
+    context.go('/dashboard');
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -229,25 +283,125 @@ class FeedbackScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
 
+              // Feedback Section
+              Card(
+                color: Colors.blue.shade50,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'How was this scenario?',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 16),
+                      // Thumbs up/down buttons
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _buildVoteButton(
+                            context,
+                            icon: Icons.thumb_down,
+                            label: 'Dislike',
+                            vote: -1,
+                            isSelected: _currentVote == -1,
+                            color: Colors.red,
+                          ),
+                          const SizedBox(width: 16),
+                          _buildVoteButton(
+                            context,
+                            icon: Icons.thumb_up,
+                            label: 'Like',
+                            vote: 1,
+                            isSelected: _currentVote == 1,
+                            color: Colors.green,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Comment field
+                      TextField(
+                        controller: _commentController,
+                        maxLines: 3,
+                        decoration: InputDecoration(
+                          hintText: 'Add a comment (optional)',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
               ElevatedButton.icon(
-                onPressed: () {
-                  ref.read(activeSessionProvider.notifier).reset();
-                  context.go('/home');
-                },
-                icon: const Icon(Icons.home),
-                label: const Text('Back to Home'),
+                onPressed: _isSubmitting ? null : _submitFeedback,
+                icon: _isSubmitting
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.send),
+                label: Text(_isSubmitting ? 'Submitting...' : 'Submit Feedback'),
               ),
               const SizedBox(height: 12),
               OutlinedButton.icon(
-                onPressed: () {
-                  ref.read(activeSessionProvider.notifier).reset();
-                  context.go('/home');
-                },
-                icon: const Icon(Icons.auto_awesome),
-                label: const Text('Try Another Session'),
+                onPressed: _isSubmitting ? null : _skip,
+                icon: const Icon(Icons.skip_next),
+                label: const Text('Skip'),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVoteButton(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required int vote,
+    required bool isSelected,
+    required Color color,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _currentVote = _currentVote == vote ? null : vote;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.2) : Colors.transparent,
+          border: Border.all(
+            color: isSelected ? color : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: isSelected ? color : Colors.grey, size: 28),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? color : Colors.grey,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
         ),
       ),
     );

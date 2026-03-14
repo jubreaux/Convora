@@ -202,4 +202,19 @@ class ConvoraApiClient {
     final response = await dioClient.dio.get('/sessions/stats/summary');
     return UserStats.fromJson(response.data);
   }
+
+  /// Submit feedback (vote + comment) for a session
+  Future<void> submitFeedback({
+    required int sessionId,
+    required int vote,  // -1, 0, or 1
+    String? comment,
+  }) async {
+    await dioClient.dio.post(
+      '/sessions/$sessionId/feedback',
+      data: {
+        'vote': vote,
+        'comment': comment,
+      },
+    );
+  }
 }
