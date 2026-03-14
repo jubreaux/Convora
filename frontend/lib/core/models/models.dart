@@ -492,6 +492,32 @@ class ScenarioPerformance {
   }
 }
 
+class TopScenarioStats {
+  final int scenarioId;
+  final String title;
+  final int totalSessions;
+  final double avgScore;
+  final String discType;
+
+  TopScenarioStats({
+    required this.scenarioId,
+    required this.title,
+    required this.totalSessions,
+    required this.avgScore,
+    required this.discType,
+  });
+
+  factory TopScenarioStats.fromJson(Map<String, dynamic> json) {
+    return TopScenarioStats(
+      scenarioId: json['scenario_id'] as int,
+      title: json['title'] as String,
+      totalSessions: json['total_sessions'] as int,
+      avgScore: (json['avg_score'] as num).toDouble(),
+      discType: json['disc_type'] as String,
+    );
+  }
+}
+
 class UserStats {
   final int totalSessions;
   final double avgScore;
@@ -501,6 +527,7 @@ class UserStats {
   final List<TimelinePoint> timeline;
   final Map<String, DiscTypeStats> discBreakdown;
   final List<ScenarioPerformance> scenarioPerformance;
+  final List<TopScenarioStats> topScenarios;
 
   UserStats({
     required this.totalSessions,
@@ -511,6 +538,7 @@ class UserStats {
     required this.timeline,
     required this.discBreakdown,
     required this.scenarioPerformance,
+    this.topScenarios = const [],
   });
 
   factory UserStats.fromJson(Map<String, dynamic> json) {
@@ -530,6 +558,11 @@ class UserStats {
       scenarioPerformance: (json['scenario_performance'] as List)
           .map((e) => ScenarioPerformance.fromJson(e as Map<String, dynamic>))
           .toList(),
+      topScenarios: json['top_scenarios'] != null
+          ? (json['top_scenarios'] as List)
+              .map((e) => TopScenarioStats.fromJson(e as Map<String, dynamic>))
+              .toList()
+          : [],
     );
   }
 }

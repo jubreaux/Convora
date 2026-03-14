@@ -6,6 +6,7 @@ import 'package:convora/features/auth/auth_screen.dart' show showServerDialog;
 import 'widgets/stat_card.dart';
 import 'widgets/score_chart.dart';
 import 'widgets/disc_breakdown_card.dart';
+import 'widgets/top_scenarios_card.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -212,6 +213,13 @@ class DashboardScreen extends ConsumerWidget {
                 discBreakdown: stats.discBreakdown,
               ),
               const SizedBox(height: 32),
+
+              // Top Scenarios Section
+              if (stats.topScenarios.isNotEmpty)
+                TopScenariosCard(
+                  topScenarios: stats.topScenarios,
+                ),
+              if (stats.topScenarios.isNotEmpty) const SizedBox(height: 32),
 
               // Scenario Performance Section
               if (stats.scenarioPerformance.isNotEmpty)
