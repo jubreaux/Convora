@@ -113,18 +113,18 @@ class _TrainingSessionScreenState
           ),
         );
       }
-      // Reset isRecording flag
       ref.read(activeSessionProvider.notifier).stopRecording();
       return;
     }
+
+    // Clear recording state BEFORE the async send so it doesn't race
+    // with the auto-resume microtask that fires after TTS finishes.
+    ref.read(activeSessionProvider.notifier).stopRecording();
 
     // Send with voice=true to trigger TTS
     await ref
         .read(activeSessionProvider.notifier)
         .sendMessage(transcript, voice: true);
-
-    // Reset isRecording flag
-    ref.read(activeSessionProvider.notifier).stopRecording();
   }
 
   void _sendMessage() async {
