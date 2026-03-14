@@ -23,6 +23,17 @@ class DashboardScreen extends ConsumerWidget {
             itemBuilder: (context) => [
               PopupMenuItem(
                 child: const ListTile(
+                  leading: Icon(Icons.history),
+                  title: Text('Session History'),
+                  contentPadding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                ),
+                onTap: () {
+                  context.go('/home');
+                },
+              ),
+              PopupMenuItem(
+                child: const ListTile(
                   leading: Icon(Icons.dns_outlined),
                   title: Text('Change Server'),
                   contentPadding: EdgeInsets.zero,
