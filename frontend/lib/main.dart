@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:convora/core/theme/app_theme.dart';
 import 'package:convora/core/providers/providers.dart';
 import 'package:convora/features/auth/auth_screen.dart';
+import 'package:convora/features/dashboard/dashboard_screen.dart';
 import 'package:convora/features/home/home_screen.dart';
 import 'package:convora/features/training/training_screen.dart';
 import 'package:convora/features/feedback/feedback_screen.dart';
@@ -14,7 +15,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
 
   return GoRouter(
-    initialLocation: authState.isAuthenticated ? '/home' : '/login',
+    initialLocation: authState.isAuthenticated ? '/dashboard' : '/login',
     redirect: (context, state) {
       final isAuth = authState.isAuthenticated;
       final isLoggingIn = state.matchedLocation == '/login' || state.matchedLocation == '/register';
@@ -23,7 +24,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/login';
       }
       if (isAuth && isLoggingIn) {
-        return '/home';
+        return '/dashboard';
       }
       return null;
     },
@@ -35,6 +36,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/dashboard',
+        builder: (context, state) => const DashboardScreen(),
       ),
       GoRoute(
         path: '/home',

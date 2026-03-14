@@ -418,3 +418,112 @@ class SessionReviewResponse {
     );
   }
 }
+
+// ===== User Stats Models =====
+class TimelinePoint {
+  final DateTime sessionDate;
+  final int score;
+  final String scenarioTitle;
+  final String discType;
+
+  TimelinePoint({
+    required this.sessionDate,
+    required this.score,
+    required this.scenarioTitle,
+    required this.discType,
+  });
+
+  factory TimelinePoint.fromJson(Map<String, dynamic> json) {
+    return TimelinePoint(
+      sessionDate: DateTime.parse(json['session_date'] as String),
+      score: json['score'] as int,
+      scenarioTitle: json['scenario_title'] as String,
+      discType: json['disc_type'] as String,
+    );
+  }
+}
+
+class DiscTypeStats {
+  final int sessionCount;
+  final double avgScore;
+  final int bestScore;
+
+  DiscTypeStats({
+    required this.sessionCount,
+    required this.avgScore,
+    required this.bestScore,
+  });
+
+  factory DiscTypeStats.fromJson(Map<String, dynamic> json) {
+    return DiscTypeStats(
+      sessionCount: json['session_count'] as int,
+      avgScore: (json['avg_score'] as num).toDouble(),
+      bestScore: json['best_score'] as int,
+    );
+  }
+}
+
+class ScenarioPerformance {
+  final String scenarioTitle;
+  final int sessionCount;
+  final double avgScore;
+  final int bestScore;
+
+  ScenarioPerformance({
+    required this.scenarioTitle,
+    required this.sessionCount,
+    required this.avgScore,
+    required this.bestScore,
+  });
+
+  factory ScenarioPerformance.fromJson(Map<String, dynamic> json) {
+    return ScenarioPerformance(
+      scenarioTitle: json['scenario_title'] as String,
+      sessionCount: json['session_count'] as int,
+      avgScore: (json['avg_score'] as num).toDouble(),
+      bestScore: json['best_score'] as int,
+    );
+  }
+}
+
+class UserStats {
+  final int totalSessions;
+  final double avgScore;
+  final int bestScore;
+  final int totalObjectivesCompleted;
+  final double appointmentRate;
+  final List<TimelinePoint> timeline;
+  final Map<String, DiscTypeStats> discBreakdown;
+  final List<ScenarioPerformance> scenarioPerformance;
+
+  UserStats({
+    required this.totalSessions,
+    required this.avgScore,
+    required this.bestScore,
+    required this.totalObjectivesCompleted,
+    required this.appointmentRate,
+    required this.timeline,
+    required this.discBreakdown,
+    required this.scenarioPerformance,
+  });
+
+  factory UserStats.fromJson(Map<String, dynamic> json) {
+    return UserStats(
+      totalSessions: json['total_sessions'] as int,
+      avgScore: (json['avg_score'] as num).toDouble(),
+      bestScore: json['best_score'] as int,
+      totalObjectivesCompleted: json['total_objectives_completed'] as int,
+      appointmentRate: (json['appointment_rate'] as num).toDouble(),
+      timeline: (json['timeline'] as List)
+          .map((e) => TimelinePoint.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      discBreakdown: {
+        for (var entry in (json['disc_breakdown'] as Map).entries)
+          entry.key as String: DiscTypeStats.fromJson(entry.value as Map<String, dynamic>)
+      },
+      scenarioPerformance: (json['scenario_performance'] as List)
+          .map((e) => ScenarioPerformance.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}

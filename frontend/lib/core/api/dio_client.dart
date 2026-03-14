@@ -174,4 +174,9 @@ class ConvoraApiClient {
     final response = await dioClient.dio.get('/sessions/$sessionId/review');
     return SessionReviewResponse.fromJson(response.data);
   }
+
+  Future<UserStats> getUserStats() async {
+    final response = await dioClient.dio.get('/sessions/stats/summary');
+    return UserStats.fromJson(response.data);
+  }
 }

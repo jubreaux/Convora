@@ -259,3 +259,39 @@ class SessionReviewResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ===== User Stats Schemas =====
+class TimelinePoint(BaseModel):
+    """Single data point for score progression chart."""
+    session_date: str  # ISO format
+    score: int
+    scenario_title: str
+    disc_type: str
+
+
+class DiscTypeStats(BaseModel):
+    """Stats for a single DISC personality type."""
+    session_count: int
+    avg_score: float
+    best_score: int
+
+
+class ScenarioPerformance(BaseModel):
+    """User's performance in a single scenario."""
+    scenario_title: str
+    session_count: int
+    avg_score: float
+    best_score: int
+
+
+class UserStatsResponse(BaseModel):
+    """Comprehensive user statistics — single bundled endpoint."""
+    total_sessions: int
+    avg_score: float
+    best_score: int
+    total_objectives_completed: int
+    appointment_rate: float  # 0-100
+    timeline: List[TimelinePoint]  # Last 30 completed sessions in order
+    disc_breakdown: dict[str, DiscTypeStats]  # "D", "I", "S", "C"
+    scenario_performance: List[ScenarioPerformance]  # Sorted by avg_score desc

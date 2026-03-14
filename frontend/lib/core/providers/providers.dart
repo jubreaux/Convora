@@ -261,6 +261,18 @@ final sessionReviewProvider =
   return await apiClient.getSessionReview(sessionId);
 });
 
+// ===== User Stats Provider =====
+final userStatsProvider = FutureProvider<UserStats>((ref) async {
+  final authState = ref.watch(authProvider);
+  
+  if (!authState.isAuthenticated) {
+    throw Exception('Not authenticated');
+  }
+  
+  final apiClient = ref.watch(apiClientProvider);
+  return await apiClient.getUserStats();
+});
+
 // ===== Active Session State =====
 class ActiveSessionState {
   final int? sessionId;

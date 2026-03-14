@@ -55,6 +55,9 @@ dependencies:
   speech_to_text: ^7.3.0       # On-device speech recognition (updated for Flutter compatibility)
   just_audio: ^0.9.36           # MP3 audio playback
   permission_handler: ^11.3.0   # Runtime mic permissions
+  
+  # Charts and visualization
+  fl_chart: ^0.68.0             # Beautiful and interactive charts
 
 dev_dependencies:
   flutter_test:

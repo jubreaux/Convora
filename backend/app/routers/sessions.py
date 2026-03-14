@@ -9,7 +9,8 @@ from app.schemas import (
     SessionCreateRequest, SessionMessageRequest, SessionMessageResponse,
     SessionEndResponse, SessionHistoryResponse, MessageResponse,
     PersonalityTemplateResponse, TraitSetResponse, SessionObjectiveResponse,
-    ObjectiveResponse, SessionReviewResponse, SessionScoreEventResponse
+    ObjectiveResponse, SessionReviewResponse, SessionScoreEventResponse,
+    UserStatsResponse, TimelinePoint, DiscTypeStats, ScenarioPerformance
 )
 from app.utils import get_current_user
 from app.services.claude_service import send_message_to_client
@@ -360,4 +361,136 @@ async def end_session(
         objectives=objectives_response,
         messages=messages_response,
         appointment_set=session.appointment_set
+    )
+
+
+@router.get("/stats/summary", response_model=UserStatsResponse)
+async def get_user_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get comprehensive user statistics."""
+    from sqlalchemy import func
+    
+    # Get all completed sessions for current user
+    sessions = db.query(DBSession).filter(
+        DBSession.user_id == current_user.id,
+        DBSession.status == "completed"
+    ).all()
+    
+    if not sessions:
+        # Return empty stats if no sessions
+        return UserStatsResponse(
+            total_sessions=0,
+            avg_score=0.0,
+            best_score=0,
+            total_objectives_completed=0,
+            appointment_rate=0.0,
+            timeline=[],
+            disc_breakdown={},
+            scenario_performance=[]
+        )
+    
+    session_ids = [s.id for s in sessions]
+    
+    # Aggregate scores
+    total_sessions = len(sessions)
+    scores = [s.score for s in sessions]
+    avg_score = sum(scores) / total_sessions if scores else 0.0
+    best_score = max(scores) if scores else 0
+    
+    # Count completed objectives
+    total_objectives_completed = db.query(func.count(SessionObjective.id)).filter(
+        SessionObjective.session_id.in_(session_ids),
+        SessionObjective.achieved == True
+    ).scalar() or 0
+    
+    # Appointment rate
+    with_appointment = db.query(func.count(DBSession.id)).filter(
+        DBSession.id.in_(session_ids),
+        DBSession.appointment_set == True
+    ).scalar() or 0
+    appointment_rate = (with_appointment / total_sessions * 100) if total_sessions > 0 else 0.0
+    
+    # Timeline: last 30 sessions with scenario info
+    timeline_sessions = db.query(DBSession, Scenario).join(
+        Scenario, DBSession.scenario_id == Scenario.id
+    ).filter(
+        DBSession.user_id == current_user.id,
+        DBSession.status == "completed"
+    ).order_by(DBSession.ended_at.asc()).limit(30).all()
+    
+    timeline = [
+        TimelinePoint(
+            session_date=s[0].ended_at.isoformat() if s[0].ended_at else s[0].started_at.isoformat(),
+            score=s[0].score,
+            scenario_title=s[1].title,
+            disc_type=s[1].disc_type
+        )
+        for s in timeline_sessions
+    ]
+    
+    # DISC Breakdown
+    disc_breakdown = {}
+    for disc_type in ["D", "I", "S", "C"]:
+        disc_sessions = db.query(DBSession, Scenario).join(
+            Scenario, DBSession.scenario_id == Scenario.id
+        ).filter(
+            DBSession.user_id == current_user.id,
+            DBSession.status == "completed",
+            Scenario.disc_type == disc_type
+        ).all()
+        
+        if disc_sessions:
+            session_count = len(disc_sessions)
+            disc_scores = [s[0].score for s in disc_sessions]
+            avg_disc_score = sum(disc_scores) / session_count
+            best_disc_score = max(disc_scores)
+        else:
+            session_count = 0
+            avg_disc_score = 0.0
+            best_disc_score = 0
+        
+        disc_breakdown[disc_type] = DiscTypeStats(
+            session_count=session_count,
+            avg_score=round(avg_disc_score, 2),
+            best_score=best_disc_score
+        )
+    
+    # Scenario Performance (across ALL sessions for accuracy)
+    all_scenario_sessions = db.query(DBSession, Scenario).join(
+        Scenario, DBSession.scenario_id == Scenario.id
+    ).filter(
+        DBSession.user_id == current_user.id,
+        DBSession.status == "completed"
+    ).all()
+    
+    scenario_perf = {}
+    for session, scenario in all_scenario_sessions:
+        if scenario.title not in scenario_perf:
+            scenario_perf[scenario.title] = {"scores": [], "count": 0}
+        scenario_perf[scenario.title]["scores"].append(session.score)
+        scenario_perf[scenario.title]["count"] += 1
+    
+    scenario_performance = [
+        ScenarioPerformance(
+            scenario_title=title,
+            session_count=data["count"],
+            avg_score=round(sum(data["scores"]) / len(data["scores"]), 2),
+            best_score=max(data["scores"])
+        )
+        for title, data in scenario_perf.items()
+    ]
+    # Sort by avg_score descending
+    scenario_performance.sort(key=lambda x: x.avg_score, reverse=True)
+    
+    return UserStatsResponse(
+        total_sessions=total_sessions,
+        avg_score=round(avg_score, 2),
+        best_score=best_score,
+        total_objectives_completed=total_objectives_completed,
+        appointment_rate=round(appointment_rate, 2),
+        timeline=timeline,
+        disc_breakdown=disc_breakdown,
+        scenario_performance=scenario_performance
     )
