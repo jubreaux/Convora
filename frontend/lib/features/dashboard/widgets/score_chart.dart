@@ -68,7 +68,7 @@ class ScoreLineChart extends StatelessWidget {
     );
 
     // Determine Y-axis max (score range)
-    final yMax = (maxScore.toDouble() * 1.1).ceil();
+    final yMax = (maxScore.toDouble() * 1.1).ceil().toDouble();
 
     return SizedBox(
       height: 300,
