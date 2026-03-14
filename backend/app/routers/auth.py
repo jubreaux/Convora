@@ -97,20 +97,29 @@ async def update_me(
     db: Session = Depends(get_db)
 ):
     """Update current user's profile (name and email only)."""
+    # Re-query the user in the current session to avoid session mismatch
+    # (current_user comes from a different session context via dependency)
+    user = db.query(User).filter(User.id == current_user.id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
     # Check if new email already exists (if email is being updated)
-    if update_data.email and update_data.email != current_user.email:
+    if update_data.email and update_data.email != user.email:
         existing_user = db.query(User).filter(User.email == update_data.email).first()
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already in use"
             )
-        current_user.email = update_data.email
+        user.email = update_data.email
     
     # Update name if provided
     if update_data.name is not None:
-        current_user.name = update_data.name
+        user.name = update_data.name
     
     db.commit()
-    db.refresh(current_user)
-    return current_user
+    db.refresh(user)
+    return user
