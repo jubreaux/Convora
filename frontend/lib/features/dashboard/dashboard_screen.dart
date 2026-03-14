@@ -52,7 +52,7 @@ class DashboardScreen extends ConsumerWidget {
                   visualDensity: VisualDensity.compact,
                 ),
                 onTap: () => Future.microtask(
-                  () => showServerDialog(context, ref),
+                  () { if (context.mounted) showServerDialog(context, ref); },
                 ),
               ),
               PopupMenuItem(
@@ -112,7 +112,7 @@ class DashboardScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Welcome back, ${authState.user?.name.split(' ').first}!',
+                    'Welcome back, ${(authState.user?.name ?? '').split(' ').firstOrNull ?? 'there'}!',  
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -161,7 +161,7 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                   StatCard(
                     label: 'Avg Score',
-                    value: '${stats.avgScore.toStringAsFixed(1)}',
+                    value: stats.avgScore.toStringAsFixed(1),
                     icon: Icons.trending_up_rounded,
                     color: Colors.blue,
                   ),

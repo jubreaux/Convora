@@ -61,7 +61,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final sessionState = ref.watch(activeSessionProvider);
     final endData = sessionState.sessionEndData;
 
@@ -383,7 +383,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.2) : Colors.transparent,
+          color: isSelected ? color.withValues(alpha: 0.2) : Colors.transparent,
           border: Border.all(
             color: isSelected ? color : Colors.grey.shade300,
             width: isSelected ? 2 : 1,

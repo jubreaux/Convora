@@ -108,7 +108,7 @@ class ScenariosScreen extends ConsumerWidget {
                                             horizontal: 8, vertical: 4),
                                         decoration: BoxDecoration(
                                           color: _getVisibilityColor(scenario.visibility)
-                                              .withOpacity(0.2),
+                                              .withValues(alpha: 0.2),
                                           borderRadius: BorderRadius.circular(8),
                                           border: Border.all(
                                             color: _getVisibilityColor(
@@ -127,8 +127,8 @@ class ScenariosScreen extends ConsumerWidget {
                                         ),
                                       ),
                                       const SizedBox(width: 8),
-                                      // Edit button (only for personal scenarios)
-                                      if (scenario.visibility == 'personal')
+                                      // Edit button (personal or org scenarios)
+                                      if (scenario.visibility == 'personal' || scenario.visibility == 'org')
                                         IconButton(
                                           onPressed: () => showModalBottomSheet(
                                             context: context,

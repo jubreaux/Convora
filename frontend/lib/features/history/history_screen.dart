@@ -61,7 +61,7 @@ class HistoryScreen extends ConsumerWidget {
             itemCount: sessions.length,
             itemBuilder: (context, index) {
               final session = sessions[index];
-              final date = DateTimeHelper.parse(session.endedAt ?? session.startedAt);
+              final date = (session.endedAt ?? session.startedAt).toLocal();
               final dateStr = DateTimeHelper.format(date);
 
               return GestureDetector(

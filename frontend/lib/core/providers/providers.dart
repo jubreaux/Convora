@@ -111,10 +111,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
         final user = await apiClient.getCurrentUser();
         state = state.copyWith(user: user, isAuthenticated: true);
       } catch (e) {
-        print('[AUTH] Failed to restore user: $e');
-        // Token exists but user fetch failed - could be invalid/expired token
-        // Mark as authenticated anyway, let other screens handle the redirect
-        state = state.copyWith(isAuthenticated: true);
+        // Token exists but user fetch failed (may be expired/invalid).
+        // Clear stored token so next launch prompts login.
+        await apiClient.logout();
+        return;
       }
     }
   }

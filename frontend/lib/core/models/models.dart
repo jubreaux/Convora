@@ -177,6 +177,40 @@ class ScenarioList {
   }
 }
 
+class ScenarioDetail {
+  final int id;
+  final String title;
+  final String discType;
+  final String aiSystemPrompt;
+  final String visibility;
+  final DateTime createdAt;
+  final List<Objective> objectives;
+
+  ScenarioDetail({
+    required this.id,
+    required this.title,
+    required this.discType,
+    required this.aiSystemPrompt,
+    required this.visibility,
+    required this.createdAt,
+    required this.objectives,
+  });
+
+  factory ScenarioDetail.fromJson(Map<String, dynamic> json) {
+    return ScenarioDetail(
+      id: json['id'] as int,
+      title: json['title'] as String,
+      discType: json['disc_type'] as String,
+      aiSystemPrompt: json['ai_system_prompt'] as String,
+      visibility: json['visibility'] as String? ?? 'personal',
+      createdAt: DateTime.parse(json['created_at'] as String),
+      objectives: (json['objectives'] as List? ?? [])
+          .map((e) => Objective.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
 // ===== Session Models =====
 class SessionMessage {
   final int id;

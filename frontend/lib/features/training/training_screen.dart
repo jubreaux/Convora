@@ -220,8 +220,9 @@ class _TrainingSessionScreenState
       if (next.isEnded && !(previous?.isEnded ?? false)) {
         _voiceMode = false;
         // Auto-navigate to feedback when session ends
+        final router = GoRouter.of(context);
         Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) context.go('/feedback');
+          if (mounted) router.go('/feedback');
         });
       }
     });
@@ -240,7 +241,7 @@ class _TrainingSessionScreenState
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          sessionState.scenarioTitle ?? 'Training Session',
+          sessionState.scenarioTitle.isEmpty ? 'Training Session' : sessionState.scenarioTitle,
           style: const TextStyle(fontSize: 14),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,

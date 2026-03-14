@@ -51,12 +51,6 @@ class DioClient {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
-    // Print the error for debugging
-    print('[DIO ERROR] ${err.type}: ${err.message}');
-    if (err.response != null) {
-      print('[DIO ERROR] Status: ${err.response!.statusCode}');
-      print('[DIO ERROR] Body: ${err.response!.data}');
-    }
     handler.next(err);
   }
 
@@ -158,6 +152,11 @@ class ConvoraApiClient {
   Future<ScenarioList> getRandomScenario() async {
     final response = await dioClient.dio.get('/scenarios/random');
     return ScenarioList.fromJson(response.data);
+  }
+
+  Future<ScenarioDetail> getScenarioDetail(int scenarioId) async {
+    final response = await dioClient.dio.get('/scenarios/$scenarioId');
+    return ScenarioDetail.fromJson(response.data);
   }
 
   /// Create a new scenario

@@ -73,8 +73,8 @@ class _AccountSetupScreenState extends ConsumerState<AccountSetupScreen> {
             .join()
         : '?';
 
-    return WillPopScope(
-      onWillPop: () async => false, // Prevent back navigation
+    return PopScope(
+      canPop: false,
       child: Scaffold(
         body: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),

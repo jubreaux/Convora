@@ -18,10 +18,12 @@ class EditScenarioSheet extends ConsumerStatefulWidget {
 class _EditScenarioSheetState extends ConsumerState<EditScenarioSheet> {
   late TextEditingController _titleController;
   late TextEditingController _promptController;
-  
+
   late String _selectedDiscType;
   late String _selectedVisibility;
-  bool _isLoading = false;
+  bool _isLoading = true;  // Start true while loading detail
+  bool _isSaving = false;
+  String? _loadError;
 
   final List<String> _discTypes = ['D', 'I', 'S', 'C'];
   final List<Map<String, String>> _visibilityOptions = [
@@ -34,9 +36,28 @@ class _EditScenarioSheetState extends ConsumerState<EditScenarioSheet> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.scenario.title);
-    _promptController = TextEditingController(text: widget.scenario.aiSystemPrompt);
+    _promptController = TextEditingController();
     _selectedDiscType = widget.scenario.discType;
     _selectedVisibility = widget.scenario.visibility;
+    _loadDetail();
+  }
+
+  Future<void> _loadDetail() async {
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final detail = await apiClient.getScenarioDetail(widget.scenario.id);
+      if (mounted) {
+        _promptController.text = detail.aiSystemPrompt;
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _loadError = 'Failed to load scenario details: $e';
+        });
+      }
+    }
   }
 
   @override
@@ -84,7 +105,7 @@ class _EditScenarioSheetState extends ConsumerState<EditScenarioSheet> {
       return;
     }
 
-    setState(() => _isLoading = true);
+    setState(() => _isSaving = true);
 
     try {
       final apiClient = ref.read(apiClientProvider);
@@ -97,7 +118,7 @@ class _EditScenarioSheetState extends ConsumerState<EditScenarioSheet> {
       );
 
       // Invalidate scenarios provider to refresh the list
-      ref.refresh(scenariosProvider);
+      ref.invalidate(scenariosProvider);
 
       if (mounted) {
         Navigator.of(context).pop();
@@ -110,13 +131,46 @@ class _EditScenarioSheetState extends ConsumerState<EditScenarioSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error updating scenario: $e')),
         );
-        setState(() => _isLoading = false);
+        setState(() => _isSaving = false);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Show loading spinner while fetching scenario detail
+    if (_isLoading) {
+      return const SizedBox(
+        height: 200,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Show error if detail fetch failed
+    if (_loadError != null) {
+      return SizedBox(
+        height: 200,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 40, color: Colors.red),
+                const SizedBox(height: 12),
+                Text(_loadError!, textAlign: TextAlign.center),
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Close'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       child: Container(
         padding: EdgeInsets.only(
@@ -149,7 +203,7 @@ class _EditScenarioSheetState extends ConsumerState<EditScenarioSheet> {
             // Title field
             TextField(
               controller: _titleController,
-              enabled: !_isLoading,
+              enabled: !_isSaving,
               decoration: InputDecoration(
                 labelText: 'Scenario Title',
                 border: OutlineInputBorder(
@@ -173,7 +227,7 @@ class _EditScenarioSheetState extends ConsumerState<EditScenarioSheet> {
                 final isSelected = _selectedDiscType == discType;
                 return ChoiceChip(
                   selected: isSelected,
-                  onSelected: _isLoading
+                  onSelected: _isSaving
                       ? null
                       : (selected) {
                           setState(() => _selectedDiscType = discType);
@@ -219,7 +273,7 @@ class _EditScenarioSheetState extends ConsumerState<EditScenarioSheet> {
             // System Prompt field
             TextField(
               controller: _promptController,
-              enabled: !_isLoading,
+              enabled: !_isSaving,
               maxLines: 4,
               decoration: InputDecoration(
                 labelText: 'System Prompt',
@@ -249,7 +303,7 @@ class _EditScenarioSheetState extends ConsumerState<EditScenarioSheet> {
                   )
                   .toList(),
               selected: {_selectedVisibility},
-              onSelectionChanged: _isLoading
+              onSelectionChanged: _isSaving
                   ? null
                   : (newSelection) {
                       setState(() => _selectedVisibility = newSelection.first);
@@ -262,22 +316,22 @@ class _EditScenarioSheetState extends ConsumerState<EditScenarioSheet> {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                    onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
                     child: const Text('Cancel'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: _isLoading ? null : _updateScenario,
-                    icon: _isLoading
+                    onPressed: _isSaving ? null : _updateScenario,
+                    icon: _isSaving
                         ? const SizedBox(
                             height: 16,
                             width: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.save),
-                    label: Text(_isLoading ? 'Saving...' : 'Save'),
+                    label: Text(_isSaving ? 'Saving...' : 'Save'),
                   ),
                 ),
               ],

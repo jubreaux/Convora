@@ -14,6 +14,19 @@ test_user_email = "apitest@example.com"
 test_user_password = "password123"
 test_user_name = "API Test User"
 
+# Company account test data
+company_email = f"company-test-{int(__import__('time').time())}@example.com"
+company_password = "company123"
+company_name = "Test Company Inc"
+company_auth_token = None
+company_user_id = None
+company_org_id = None
+
+# Organization member test data
+new_member_email = f"member-test-{int(__import__('time').time())}@example.com"
+new_member_temp_password = "temppass123"
+new_member_name = "New Team Member"
+
 auth_token = None
 user_id = None
 scenario_id = None
@@ -75,6 +88,136 @@ def test_login():
     except Exception as e:
         print_test("POST /api/auth/login", False, f"Error: {str(e)}")
         return False
+
+
+def test_register_company_account():
+    """Test company account registration."""
+    global company_auth_token, company_user_id, company_org_id
+    print_section("2.1 AUTHENTICATION - COMPANY ACCOUNT REGISTRATION")
+    
+    try:
+        payload = {
+            "email": company_email,
+            "password": company_password,
+            "name": company_name,
+            "account_type": "company",
+            "company_name": company_name
+        }
+        response = requests.post(f"{BASE_URL}/api/auth/register", json=payload, headers=HEADERS)
+        result = response.status_code == 200
+        
+        if result:
+            data = response.json()
+            company_auth_token = data.get("access_token")
+            user_data = data.get("user", {})
+            company_user_id = user_data.get("id")
+            company_org_id = user_data.get("org_id")
+            org_role = user_data.get("org_role")
+            
+            print_test(
+                "POST /api/auth/register (company)", 
+                result, 
+                f"Org ID: {company_org_id}, User Role: {org_role}, User: {user_data.get('email')}"
+            )
+            return result
+        else:
+            print_test("POST /api/auth/register (company)", result, f"Status: {response.status_code}, Error: {response.text}")
+            return result
+    except Exception as e:
+        print_test("POST /api/auth/register (company)", False, f"Error: {str(e)}")
+        return False
+
+
+def test_get_org_members():
+    """Test getting organization members."""
+    print_section("2.2 ORGANIZATION - LIST MEMBERS")
+    
+    if not company_auth_token:
+        print_test("GET /api/auth/org/members", False, "No company auth token available")
+        return False, []
+    
+    try:
+        headers = {**HEADERS, "Authorization": f"Bearer {company_auth_token}"}
+        response = requests.get(f"{BASE_URL}/api/auth/org/members", headers=headers)
+        result = response.status_code == 200
+        
+        if result:
+            data = response.json()
+            print_test("GET /api/auth/org/members", result, f"Found {len(data)} members")
+            if data:
+                print(f"       Admin: {data[0].get('user', {}).get('email', 'N/A')}")
+            return True, data
+        else:
+            print_test("GET /api/auth/org/members", result, f"Status: {response.status_code}, Error: {response.text}")
+            return result, []
+    except Exception as e:
+        print_test("GET /api/auth/org/members", False, f"Error: {str(e)}")
+        return False, []
+
+
+def test_provision_org_member():
+    """Test provisioning a new organization member."""
+    print_section("2.3 ORGANIZATION - PROVISION NEW MEMBER")
+    
+    if not company_auth_token:
+        print_test("POST /api/auth/org/members", False, "No company auth token available")
+        return False, None
+    
+    try:
+        headers = {**HEADERS, "Authorization": f"Bearer {company_auth_token}"}
+        payload = {
+            "email": new_member_email,
+            "name": new_member_name,
+            "temp_password": new_member_temp_password,
+            "org_role": "org_member"
+        }
+        response = requests.post(f"{BASE_URL}/api/auth/org/members", json=payload, headers=headers)
+        result = response.status_code == 200
+        
+        if result:
+            data = response.json()
+            print_test(
+                "POST /api/auth/org/members", 
+                result, 
+                f"Member: {data.get('user', {}).get('email')}, Role: {data.get('org_role')}"
+            )
+            return True, data
+        else:
+            print_test("POST /api/auth/org/members", result, f"Status: {response.status_code}, Error: {response.text}")
+            return result, None
+    except Exception as e:
+        print_test("POST /api/auth/org/members", False, f"Error: {str(e)}")
+        return False, None
+
+
+def test_deactivate_org_member(member_id):
+    """Test deactivating an organization member."""
+    print_section("2.4 ORGANIZATION - DEACTIVATE MEMBER")
+    
+    if not company_auth_token:
+        print_test(f"DELETE /api/auth/org/members/{member_id}", False, "No company auth token available")
+        return False
+    
+    try:
+        headers = {**HEADERS, "Authorization": f"Bearer {company_auth_token}"}
+        response = requests.delete(f"{BASE_URL}/api/auth/org/members/{member_id}", headers=headers)
+        result = response.status_code == 200
+        
+        if result:
+            data = response.json()
+            print_test(
+                f"DELETE /api/auth/org/members/{member_id}", 
+                result, 
+                f"Message: {data.get('message', 'Member deactivated')}"
+            )
+            return True
+        else:
+            print_test(f"DELETE /api/auth/org/members/{member_id}", result, f"Status: {response.status_code}, Error: {response.text}")
+            return result
+    except Exception as e:
+        print_test(f"DELETE /api/auth/org/members/{member_id}", False, f"Error: {str(e)}")
+        return False
+
 
 
 
@@ -395,8 +538,22 @@ def main():
     # Test health
     results['health'] = test_health()
     
-    # Test auth (skip register since we're using pre-seeded users, only test login)
+    # Test auth (both personal and company accounts)
     results['login'] = test_login()
+    results['register_company_account'] = test_register_company_account()
+    
+    # Test organization management (requires company account)
+    if results['register_company_account']:
+        success, members = test_get_org_members()
+        results['get_org_members'] = success
+        
+        success, new_member = test_provision_org_member()
+        results['provision_org_member'] = success
+        
+        if success and new_member:
+            member_id = new_member.get('user_id')  # Extract user_id from OrgMemberResponse
+            if member_id:
+                results['deactivate_org_member'] = test_deactivate_org_member(member_id)
     
     # Test scenarios only if login succeeded
     if results['login']:

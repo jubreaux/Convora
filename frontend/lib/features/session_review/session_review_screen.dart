@@ -35,7 +35,7 @@ class SessionReviewScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Session Review'),
         leading: BackButton(
-          onPressed: () => context.go('/home'),
+          onPressed: () => context.go('/dashboard'),
         ),
       ),
       body: reviewAsync.when(
@@ -447,7 +447,7 @@ class _EventTypeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -679,7 +679,7 @@ class _ScenarioVoteCardState extends ConsumerState<_ScenarioVoteCard> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.2) : Colors.transparent,
+          color: isSelected ? color.withValues(alpha: 0.2) : Colors.transparent,
           border: Border.all(
             color: isSelected ? color : Colors.grey.shade300,
             width: isSelected ? 2 : 1,

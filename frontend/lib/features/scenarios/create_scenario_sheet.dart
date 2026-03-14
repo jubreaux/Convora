@@ -88,7 +88,7 @@ class _CreateScenarioSheetState extends ConsumerState<CreateScenarioSheet> {
       );
 
       // Invalidate scenarios provider to refresh the list
-      ref.refresh(scenariosProvider);
+      ref.invalidate(scenariosProvider);
 
       if (mounted) {
         Navigator.of(context).pop();
