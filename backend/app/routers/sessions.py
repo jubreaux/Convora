@@ -131,6 +131,33 @@ async def send_message(
     )
 
 
+@router.get("/users/history", response_model=list[SessionHistoryResponse])
+async def get_user_history(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get current user's session history."""
+    sessions = db.query(DBSession).filter(
+        DBSession.user_id == current_user.id,
+        DBSession.status == "completed"
+    ).order_by(DBSession.ended_at.desc()).all()
+    
+    history = []
+    for session in sessions:
+        scenario = db.query(Scenario).filter(Scenario.id == session.scenario_id).first()
+        history.append(SessionHistoryResponse(
+            id=session.id,
+            scenario_id=session.scenario_id,
+            scenario_title=scenario.title,
+            status=session.status,
+            score=session.score,
+            started_at=session.started_at,
+            ended_at=session.ended_at
+        ))
+    
+    return history
+
+
 @router.get("/{session_id}", response_model=dict)
 async def get_session(
     session_id: int,
@@ -213,30 +240,3 @@ async def end_session(
         messages=messages_response,
         appointment_set=session.appointment_set
     )
-
-
-@router.get("/users/history", response_model=list[SessionHistoryResponse])
-async def get_user_history(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Get current user's session history."""
-    sessions = db.query(DBSession).filter(
-        DBSession.user_id == current_user.id,
-        DBSession.status == "completed"
-    ).order_by(DBSession.ended_at.desc()).all()
-    
-    history = []
-    for session in sessions:
-        scenario = db.query(Scenario).filter(Scenario.id == session.scenario_id).first()
-        history.append(SessionHistoryResponse(
-            id=session.id,
-            scenario_id=session.scenario_id,
-            scenario_title=scenario.title,
-            status=session.status,
-            score=session.score,
-            started_at=session.started_at,
-            ended_at=session.ended_at
-        ))
-    
-    return history

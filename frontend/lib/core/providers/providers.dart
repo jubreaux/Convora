@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:convora/core/api/convora_api.dart';
+import 'dart:convert';
+import 'package:just_audio/just_audio.dart';
 
 // ===== Dio Client Provider =====
 final dioClientProvider = Provider<DioClient>((ref) {
@@ -161,6 +163,7 @@ final sessionHistoryProvider =
 class ActiveSessionState {
   final int? sessionId;
   final int? scenarioId;
+  final String scenarioTitle;  // NEW: Store the scenario title for display
   final List<SessionMessage> messages;
   final int currentScore;
   final bool appointmentSet;
@@ -176,6 +179,7 @@ class ActiveSessionState {
   const ActiveSessionState({
     this.sessionId,
     this.scenarioId,
+    this.scenarioTitle = '',  // NEW: Default empty
     this.messages = const [],
     this.currentScore = 0,
     this.appointmentSet = false,
@@ -192,6 +196,7 @@ class ActiveSessionState {
   ActiveSessionState copyWith({
     int? sessionId,
     int? scenarioId,
+    String? scenarioTitle,  // NEW
     List<SessionMessage>? messages,
     int? currentScore,
     bool? appointmentSet,
@@ -207,6 +212,7 @@ class ActiveSessionState {
     return ActiveSessionState(
       sessionId: sessionId ?? this.sessionId,
       scenarioId: scenarioId ?? this.scenarioId,
+      scenarioTitle: scenarioTitle ?? this.scenarioTitle,  // NEW
       messages: messages ?? this.messages,
       currentScore: currentScore ?? this.currentScore,
       appointmentSet: appointmentSet ?? this.appointmentSet,
@@ -225,10 +231,19 @@ class ActiveSessionState {
 // ===== Active Session Notifier =====
 class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
   final ConvoraApiClient apiClient;
+  late final AudioPlayer _audioPlayer;
 
-  ActiveSessionNotifier(this.apiClient) : super(ActiveSessionState());
+  ActiveSessionNotifier(this.apiClient) : super(ActiveSessionState()) {
+    _audioPlayer = AudioPlayer();
+  }
 
-  Future<void> startSession(int scenarioId) async {
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  Future<void> startSession(int scenarioId, String scenarioTitle) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final response = await apiClient.createSession(scenarioId);
@@ -238,6 +253,7 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
       state = state.copyWith(
         sessionId: sessionId,
         scenarioId: scenarioId,
+        scenarioTitle: scenarioTitle,  // NEW: Store the title
         messages: [
           SessionMessage(
             id: 0,
@@ -354,18 +370,44 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
   Future<void> _playAudio(String base64Mp3) async {
     state = state.copyWith(isSpeaking: true);
     try {
-      // TODO: Decode base64 to bytes and play using just_audio
-      // Placeholder: awaiting just_audio integration in main UI
-      // final audioBytes = base64.decode(base64Mp3);
+      // Decode base64 to bytes
+      final audioBytes = base64.decode(base64Mp3);
       
-      // Simulate playback completion
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Create a temporary source from the bytes
+      final source = AudioSource.uri(
+        Uri.dataFromBytes(audioBytes, mimeType: 'audio/mpeg'),
+      );
+      
+      // Load and play the audio
+      await _audioPlayer.setAudioSource(source);
+      await _audioPlayer.play();
+      
+      // Wait for playback to finish by monitoring player state
+      bool isPlaying = true;
+      _audioPlayer.playerStateStream.listen((playerState) {
+        if (playerState.processingState == ProcessingState.completed) {
+          isPlaying = false;
+        }
+      });
+      
+      // Wait a bit for playback to complete (with a safety timeout)
+      for (int i = 0; i < 300; i++) {
+        await Future.delayed(const Duration(milliseconds: 100));
+        final currentState = _audioPlayer.playerState;
+        if (currentState.processingState == ProcessingState.completed) {
+          break;
+        }
+      }
+    } catch (e) {
+      // Log error but don't crash - voice is optional
+      print('Audio playback error: $e');
     } finally {
       state = state.copyWith(isSpeaking: false);
     }
   }
 
   void reset() {
+    _audioPlayer.stop();
     state = const ActiveSessionState();
   }
 }

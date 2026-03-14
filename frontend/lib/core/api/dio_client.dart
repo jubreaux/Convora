@@ -1,19 +1,19 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:convora/core/config/app_config.dart';
 import 'convora_api.dart';
 
 class DioClient {
   late Dio dio;
   final FlutterSecureStorage secureStorage;
-  static const String _baseUrl = 'http://10.0.2.2:8000/api';
   static const String _tokenKey = 'auth_token';
 
   DioClient({required this.secureStorage}) {
     dio = Dio(
       BaseOptions(
-        baseUrl: _baseUrl,
-        connectTimeout: const Duration(seconds: 30),  // Increased for voice round-trips (STT + LLM + TTS)
-        receiveTimeout: const Duration(seconds: 30),  // Increased for TTS synthesis
+        baseUrl: AppConfig.getBaseUrl(),
+        connectTimeout: Duration(seconds: AppConfig.connectTimeoutSeconds),
+        receiveTimeout: Duration(seconds: AppConfig.receiveTimeoutSeconds),
         contentType: 'application/json',
       ),
     );
@@ -32,6 +32,7 @@ class DioClient {
     RequestInterceptorHandler handler,
   ) async {
     final token = await secureStorage.read(key: _tokenKey);
+    print('[DIO] Environment: ${AppConfig.getEnvironment()}');
     print('[DIO] Request to: ${options.path}, Token: ${token != null ? "✓ present" : "✗ missing"}');
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';

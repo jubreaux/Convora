@@ -17,6 +17,7 @@ class _TrainingSessionScreenState
     extends ConsumerState<TrainingSessionScreen> {
   late TextEditingController _messageController;
   late stt.SpeechToText _speechToText;
+  late ScrollController _scrollController;
   bool _speechInitialized = false;
 
   @override
@@ -24,12 +25,14 @@ class _TrainingSessionScreenState
     super.initState();
     _messageController = TextEditingController();
     _speechToText = stt.SpeechToText();
+    _scrollController = ScrollController();
     _initSpeech();
   }
 
   @override
   void dispose() {
     _messageController.dispose();
+    _scrollController.dispose();
     _speechToText.stop();
     super.dispose();
   }
@@ -154,9 +157,39 @@ class _TrainingSessionScreenState
     final sessionState = ref.watch(activeSessionProvider);
     final isProcessing = sessionState.isLoading || sessionState.isSpeaking;
 
+    // Watch for error and display snackbar
+    ref.listen(activeSessionProvider, (previous, next) {
+      if (next.error != null && (previous?.error != next.error)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${next.error}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      
+      // Auto-navigate to feedback when session ends
+      if (next.isEnded && !(previous?.isEnded ?? false)) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) context.go('/feedback');
+        });
+      }
+    });
+
+    // Auto-scroll to newest message
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients && sessionState.messages.isNotEmpty) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Training Session'),
+        title: Text(sessionState.scenarioTitle ?? 'Training Session'),
         actions: [
           Padding(
             padding: const EdgeInsets.all(16),
@@ -195,6 +228,7 @@ class _TrainingSessionScreenState
         children: [
           Expanded(
             child: ListView.builder(
+              controller: _scrollController,
               reverse: true,
               itemCount: sessionState.messages.length,
               itemBuilder: (context, index) {
@@ -224,6 +258,27 @@ class _TrainingSessionScreenState
               },
             ),
           ),
+          // Appointment banner
+          if (sessionState.appointmentSet)
+            Container(
+              color: Colors.amber.shade50,
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  const Icon(Icons.schedule, color: Colors.orange),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Appointment scheduled - discuss details in this session!',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           if (sessionState.objectivesCompleted.isNotEmpty)
             Container(
               color: Colors.green.shade50,

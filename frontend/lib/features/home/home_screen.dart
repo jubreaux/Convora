@@ -89,13 +89,13 @@ class _ScenariosTab extends ConsumerWidget {
                 final scenario = scenarios[index];
                 return ListTile(
                   title: Text(scenario.title),
-                  subtitle: Text(scenario.transactionType ?? 'Unknown'),
+                  subtitle: Text(_getDiscDescription(scenario.discType)),
                   trailing: Chip(
                     label: Text(scenario.discType),
                     backgroundColor:
                         _getDiscColor(scenario.discType),
                   ),
-                  onTap: () => _startSession(context, ref, scenario.id),
+                  onTap: () => _startSession(context, ref, scenario.id, scenario.title),
                 );
               },
             ),
@@ -105,8 +105,23 @@ class _ScenariosTab extends ConsumerWidget {
     );
   }
 
-  void _startSession(BuildContext context, WidgetRef ref, int scenarioId) async {
-    await ref.read(activeSessionProvider.notifier).startSession(scenarioId);
+  String _getDiscDescription(String discType) {
+    switch (discType.toUpperCase()) {
+      case 'D':
+        return 'D – Dominant (Direct, Results-Oriented)';
+      case 'I':
+        return 'I – Influential (Enthusiastic, Relationship-Focused)';
+      case 'S':
+        return 'S – Steady (Patient, Supportive)';
+      case 'C':
+        return 'C – Conscientious (Analytical, Detail-Oriented)';
+      default:
+        return 'Unknown Personality Type';
+    }
+  }
+
+  void _startSession(BuildContext context, WidgetRef ref, int scenarioId, String scenarioTitle) async {
+    await ref.read(activeSessionProvider.notifier).startSession(scenarioId, scenarioTitle);
     if (context.mounted) {
       context.go('/training');
     }
@@ -114,7 +129,7 @@ class _ScenariosTab extends ConsumerWidget {
 
   void _launchRandomScenario(BuildContext context, WidgetRef ref) {
     ref.read(randomScenarioProvider).whenData((scenario) {
-      _startSession(context, ref, scenario.id);
+      _startSession(context, ref, scenario.id, scenario.title);
     });
   }
 
