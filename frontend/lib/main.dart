@@ -6,6 +6,8 @@ import 'package:convora/core/providers/providers.dart';
 import 'package:convora/features/auth/auth_screen.dart';
 import 'package:convora/features/dashboard/dashboard_screen.dart';
 import 'package:convora/features/home/home_screen.dart';
+import 'package:convora/features/scenarios/scenarios_screen.dart';
+import 'package:convora/features/history/history_screen.dart';
 import 'package:convora/features/training/training_screen.dart';
 import 'package:convora/features/feedback/feedback_screen.dart';
 import 'package:convora/features/session_review/session_review_screen.dart';
@@ -42,6 +44,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/dashboard',
         builder: (context, state) => const DashboardScreen(),
+      ),
+      GoRoute(
+        path: '/scenarios',
+        builder: (context, state) => const ScenariosScreen(),
+      ),
+      GoRoute(
+        path: '/history',
+        builder: (context, state) => const HistoryScreen(),
       ),
       GoRoute(
         path: '/home',

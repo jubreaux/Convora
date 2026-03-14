@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func, case
+from sqlalchemy import func, case, or_
 from app.database import get_db
-from app.models import User, Session as SessionModel, Scenario, SessionObjective, PersonalityTemplate, TraitSet, ScenarioContext
+from app.models import User, Session as SessionModel, Scenario, SessionObjective, PersonalityTemplate, TraitSet, ScenarioContext, Organization, OrgMember
 from app.utils import get_current_user, hash_password
 from app.schemas import PersonalityTemplateResponse, TraitSetResponse, ScenarioContextResponse, ScenarioDetailResponse, UserResponse, UserUpdate, UserDeleteResponse
 from pydantic import BaseModel
@@ -24,6 +24,9 @@ class UserStatsResponse(BaseModel):
     avg_session_score: float
     last_session_date: Optional[datetime]
     completed_objectives: int
+    org_id: Optional[int] = None
+    org_role: Optional[str] = None
+    org_name: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -45,6 +48,36 @@ class DashboardStatsResponse(BaseModel):
     score_distribution: List[dict]
     top_scenarios: List[dict]
     top_users: List[dict]
+
+
+class ScenarioOwnerInfo(BaseModel):
+    """Owner information - either user or organization."""
+    id: int
+    name: str
+    type: str  # "user" or "org"
+
+
+class AdminScenarioResponse(BaseModel):
+    """Scenario info for admin listing with owner details."""
+    id: int
+    title: str
+    disc_type: str
+    visibility: str  # "personal", "org", "public"
+    owner: ScenarioOwnerInfo  # User or Organization
+    created_at: datetime
+    created_by_user_id: Optional[int] = None
+    org_id: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AdminScenariosListResponse(BaseModel):
+    """Paginated list of scenarios for admin."""
+    total: int
+    scenarios: List[AdminScenarioResponse]
+    offset: int
+    limit: int
 
 
 # ========== Helper Functions ==========
@@ -108,6 +141,23 @@ async def list_users(
     ).group_by(SessionModel.user_id).all()
     obj_map = {row.user_id: row.completed_objectives for row in obj_agg}
 
+    # Batch-fetch org memberships
+    org_members = db.query(OrgMember).filter(
+        OrgMember.user_id.in_(user_ids),
+        OrgMember.is_active == True
+    ).all()
+    org_member_map = {}
+    org_ids_to_fetch = set()
+    for org_member in org_members:
+        org_member_map[org_member.user_id] = org_member
+        org_ids_to_fetch.add(org_member.org_id)
+    
+    # Batch-fetch organizations
+    org_dict = {}
+    if org_ids_to_fetch:
+        orgs = db.query(Organization).filter(Organization.id.in_(org_ids_to_fetch)).all()
+        org_dict = {org.id: org for org in orgs}
+
     user_stats = []
     for user in users:
         stats = session_map.get(user.id)
@@ -116,6 +166,18 @@ async def list_users(
         avg_score = round(total_score / total_sessions, 2) if total_sessions else 0.0
         last_session_date = stats.last_session_date if stats else None
         completed_objectives = obj_map.get(user.id, 0)
+        
+        # Get org info if user is a member
+        org_id = None
+        org_role = None
+        org_name = None
+        org_member = org_member_map.get(user.id)
+        if org_member:
+            org_id = org_member.org_id
+            org_role = org_member.org_role
+            org = org_dict.get(org_id)
+            if org:
+                org_name = org.name
 
         user_stats.append(UserStatsResponse(
             id=user.id,
@@ -127,7 +189,10 @@ async def list_users(
             total_score=total_score,
             avg_session_score=avg_score,
             last_session_date=last_session_date,
-            completed_objectives=completed_objectives
+            completed_objectives=completed_objectives,
+            org_id=org_id,
+            org_role=org_role,
+            org_name=org_name
         ))
     
     return UsersListResponse(
@@ -323,25 +388,6 @@ async def list_scenario_contexts(
     return db.query(ScenarioContext).order_by(ScenarioContext.name).all()
 
 
-@router.patch("/scenarios/{scenario_id}/toggle-public", response_model=ScenarioDetailResponse)
-async def toggle_scenario_public(
-    scenario_id: int,
-    current_user: User = Depends(require_admin),
-    db: Session = Depends(get_db)
-):
-    """Toggle the public/private visibility of a scenario."""
-    scenario = db.query(Scenario).filter(Scenario.id == scenario_id).first()
-    if not scenario:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Scenario not found"
-        )
-    scenario.is_public = not scenario.is_public
-    db.commit()
-    db.refresh(scenario)
-    return scenario
-
-
 # ========== User Management Endpoints ==========
 
 @router.patch("/users/{user_id}", response_model=UserResponse)
@@ -425,3 +471,144 @@ async def delete_user(
         user_id=user_id,
         deleted_at=datetime.utcnow()
     )
+
+
+# ========== Admin Scenarios Endpoints ==========
+@router.get("/scenarios", response_model=AdminScenariosListResponse)
+async def list_admin_scenarios(
+    search: str = Query("", description="Search by title or prompt"),
+    visibility: Optional[str] = Query(None, description="Filter by visibility: personal, org, or public"),
+    offset: int = Query(0, ge=0, description="Pagination offset"),
+    limit: int = Query(50, ge=1, le=500, description="Pagination limit"),
+    sort_by: str = Query("created_at", description="Sort by: title, created_at, visibility, disc_type"),
+    sort_order: str = Query("desc", regex="^(asc|desc)$", description="Sort order: asc or desc"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """
+    List all scenarios with admin controls.
+    - Search by title or AI system prompt
+    - Filter by visibility (personal, org, public)
+    - Sortable columns
+    - Pagination
+    """
+    
+    # Start query
+    query = db.query(Scenario)
+    
+    # Apply filters
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            or_(
+                Scenario.title.ilike(search_term),
+                Scenario.ai_system_prompt.ilike(search_term)
+            )
+        )
+    
+    if visibility:
+        if visibility not in ["personal", "org", "public"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid visibility. Must be one of: personal, org, public"
+            )
+        query = query.filter(Scenario.visibility == visibility)
+    
+    # Get total count
+    total = query.count()
+    
+    # Apply sorting
+    sort_column_map = {
+        "title": Scenario.title,
+        "created_at": Scenario.created_at,
+        "visibility": Scenario.visibility,
+        "disc_type": Scenario.disc_type,
+    }
+    
+    sort_column = sort_column_map.get(sort_by, Scenario.created_at)
+    if sort_order == "asc":
+        query = query.order_by(sort_column.asc())
+    else:
+        query = query.order_by(sort_column.desc())
+    
+    # Apply pagination
+    scenarios = query.offset(offset).limit(limit).all()
+    
+    # Build response with owner info
+    result_scenarios = []
+    for scenario in scenarios:
+        owner = None
+        
+        if scenario.org_id:
+            org = db.query(Organization).filter(Organization.id == scenario.org_id).first()
+            if org:
+                owner = ScenarioOwnerInfo(id=org.id, name=org.name, type="org")
+        elif scenario.created_by_user_id:
+            user = db.query(User).filter(User.id == scenario.created_by_user_id).first()
+            if user:
+                owner = ScenarioOwnerInfo(id=user.id, name=user.name, type="user")
+        
+        if not owner:
+            owner = ScenarioOwnerInfo(id=0, name="System", type="system")
+        
+        result_scenarios.append(AdminScenarioResponse(
+            id=scenario.id,
+            title=scenario.title,
+            disc_type=scenario.disc_type,
+            visibility=scenario.visibility,
+            owner=owner,
+            created_at=scenario.created_at,
+            created_by_user_id=scenario.created_by_user_id,
+            org_id=scenario.org_id,
+        ))
+    
+    return AdminScenariosListResponse(
+        total=total,
+        scenarios=result_scenarios,
+        offset=offset,
+        limit=limit
+    )
+
+
+@router.put("/scenarios/{scenario_id}/visibility")
+async def update_scenario_visibility(
+    scenario_id: int,
+    visibility: str = Query(..., regex="^(personal|org|default|public)$", description="New visibility level"),
+    org_id: Optional[int] = Query(None, description="Organization ID (required if visibility=org)"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """Update scenario visibility level (admin only)."""
+    scenario = db.query(Scenario).filter(Scenario.id == scenario_id).first()
+    if not scenario:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Scenario not found"
+        )
+    
+    # Validate org if visibility is "org"
+    if visibility == "org":
+        if not org_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="org_id is required when visibility=org"
+            )
+        org = db.query(Organization).filter(Organization.id == org_id).first()
+        if not org:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Organization not found"
+            )
+        scenario.org_id = org_id
+    else:
+        scenario.org_id = None
+    
+    scenario.visibility = visibility
+    db.commit()
+    db.refresh(scenario)
+    
+    return {
+        "id": scenario.id,
+        "message": f"Scenario visibility updated to {visibility}",
+        "visibility": scenario.visibility
+    }

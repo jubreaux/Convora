@@ -11,7 +11,7 @@ interface CreateScenarioModalProps {
 const CreateScenarioModal: React.FC<CreateScenarioModalProps> = ({ onClose, onSuccess }) => {
   const [title, setTitle] = useState('');
   const [discType, setDiscType] = useState<'D' | 'I' | 'S' | 'C'>('D');
-  const [isPublic, setIsPublic] = useState(false);
+  const [visibility, setVisibility] = useState<'personal' | 'org' | 'default' | 'public'>('personal');
   const [systemPrompt, setSystemPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -43,7 +43,7 @@ const CreateScenarioModal: React.FC<CreateScenarioModalProps> = ({ onClose, onSu
       await api.createScenario({
         title: title.trim(),
         disc_type: discType,
-        is_public: isPublic,
+        visibility: visibility,
         ai_system_prompt: systemPrompt.trim(),
       });
 
@@ -112,20 +112,21 @@ const CreateScenarioModal: React.FC<CreateScenarioModalProps> = ({ onClose, onSu
               </select>
             </div>
 
-            {/* Public Toggle */}
+            {/* Visibility Selector */}
             <div className="flex flex-col justify-between">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Visibility
               </label>
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isPublic}
-                  onChange={(e) => setIsPublic(e.target.checked)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">Make public</span>
-              </label>
+              <select
+                value={visibility}
+                onChange={(e) => setVisibility(e.target.value as 'personal' | 'org' | 'default' | 'public')}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+              >
+                <option value="personal">Personal (Only me)</option>
+                <option value="org">Organization (Org members)</option>
+                <option value="default">Default (Platform provided)</option>
+                <option value="public">Public (Everyone)</option>
+              </select>
             </div>
           </div>
 

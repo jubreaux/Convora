@@ -12,7 +12,6 @@ import {
   DashboardStats,
   UserStats,
   PaginationParams,
-  SessionDetail,
   SessionHistory,
   SessionReview,
 } from '../types';
@@ -159,8 +158,52 @@ class ApiClient {
     await this.api.delete(`/api/scenarios/${scenarioId}`);
   }
 
-  async toggleScenarioPublic(scenarioId: number): Promise<ScenarioDetail> {
-    const response = await this.api.patch<ScenarioDetail>(`/api/admin/scenarios/${scenarioId}/toggle-public`);
+  // ========== Admin Scenario Management ==========
+  async listAdminScenarios(params: {
+    search?: string;
+    visibility?: string;
+    offset?: number;
+    limit?: number;
+    sort_by?: string;
+    sort_order?: string;
+  } = {}): Promise<any> {
+    const {
+      search = '',
+      visibility,
+      offset = 0,
+      limit = 50,
+      sort_by = 'created_at',
+      sort_order = 'desc',
+    } = params;
+
+    const queryParams = new URLSearchParams({
+      search,
+      offset: offset.toString(),
+      limit: limit.toString(),
+      sort_by,
+      sort_order,
+    });
+
+    if (visibility) {
+      queryParams.append('visibility', visibility);
+    }
+
+    const response = await this.api.get(`/api/admin/scenarios?${queryParams.toString()}`);
+    return response.data;
+  }
+
+  async updateScenarioVisibility(
+    scenarioId: number,
+    visibility: string,
+    orgId?: number
+  ): Promise<{ id: number; message: string; visibility: string }> {
+    const queryParams = new URLSearchParams({ visibility });
+    if (orgId) {
+      queryParams.append('org_id', orgId.toString());
+    }
+    const response = await this.api.put(
+      `/api/admin/scenarios/${scenarioId}/visibility?${queryParams.toString()}`
+    );
     return response.data;
   }
 

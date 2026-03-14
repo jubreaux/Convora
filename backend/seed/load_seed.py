@@ -4,7 +4,7 @@ import json
 import os
 from sqlalchemy.orm import Session
 from app.database import SessionLocal, engine
-from app.models import Base, PersonalityTemplate, TraitSet, ScenarioContext, FinetuneExample, User, Scenario, Objective
+from app.models import Base, PersonalityTemplate, TraitSet, ScenarioContext, FinetuneExample, User, Scenario, Objective, Organization, OrgMember
 
 
 def create_test_users(db: Session):
@@ -100,10 +100,10 @@ def seed_scenarios(db: Session, _read_json_file=None):
             print(f"✗ Could not load ScenarioDefinitions.json from {scenarios_path}")
             return
         
-        # Get test user
-        test_user = db.query(User).filter(User.email == "test@example.com").first()
-        if not test_user:
-            print("✗ Test user not found. Cannot seed scenarios.")
+        # Get admin user for scenario ownership
+        admin_user = db.query(User).filter(User.email == "admin@example.com").first()
+        if not admin_user:
+            print("✗ Admin user not found. Cannot seed scenarios.")
             return
         
         created_count = 0
@@ -146,8 +146,9 @@ def seed_scenarios(db: Session, _read_json_file=None):
                     trait_set_id=trait_set.id,
                     scenario_context_id=context.id,
                     ai_system_prompt=scenario_def.get("ai_system_prompt", ""),
-                    is_public=scenario_def.get("is_public", True),
-                    created_by_user_id=test_user.id,
+                    visibility="default",  # Platform-provided scenarios
+                    created_by_user_id=admin_user.id,
+                    org_id=None,  # Platform scenarios aren't org-specific
                 )
                 db.add(scenario)
                 db.flush()  # Flush to get scenario.id
@@ -179,6 +180,113 @@ def seed_scenarios(db: Session, _read_json_file=None):
         raise
 
 
+def seed_demo_org(db: Session, _read_json_file=None):
+    """Seed a demo organization with a demo corporate scenario."""
+    if _read_json_file is None:
+        # Use the function from seed_database scope if available
+        def _read_json_file(path):
+            if not os.path.exists(path):
+                return None
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except UnicodeDecodeError:
+                try:
+                    with open(path, 'r', encoding='utf-16') as f:
+                        return json.load(f)
+                except UnicodeDecodeError:
+                    with open(path, 'rb') as f:
+                        raw = f.read()
+                        text = raw.decode('utf-8', errors='replace')
+                        try:
+                            return json.loads(text)
+                        except Exception as e:
+                            print(f"✗ Failed to parse JSON at {path}: {e}")
+                            return None
+            except json.JSONDecodeError as e:
+                print(f"✗ JSON decode error for {path}: {e}")
+                return None
+            except Exception as e:
+                print(f"✗ Error reading {path}: {e}")
+                return None
+    
+    try:
+        # Check if demo org already exists
+        demo_org = db.query(Organization).filter(Organization.name == "Convora Demo Corp").first()
+        if demo_org:
+            print(f"✓ Demo organization already exists. Skipping.")
+            return
+        
+        # Create demo organization
+        demo_org = Organization(
+            name="Convora Demo Corp",
+            max_seats=10,
+            is_active=True
+        )
+        db.add(demo_org)
+        db.flush()  # Get the org ID
+        
+        # Get admin and demo users
+        admin_user = db.query(User).filter(User.email == "admin@example.com").first()
+        demo_user = db.query(User).filter(User.email == "demo@example.com").first()
+        
+        if not admin_user or not demo_user:
+            print("✗ Admin or demo user not found. Cannot seed demo org.")
+            return
+        
+        # Add demo user to the organization as a member
+        org_member = OrgMember(
+            org_id=demo_org.id,
+            user_id=demo_user.id,
+            org_role="member",
+            is_active=True
+        )
+        db.add(org_member)
+        
+        # Create a demo corporate scenario for the organization
+        # Pick the first available scenario setup components
+        personality = db.query(PersonalityTemplate).first()
+        trait_set = db.query(TraitSet).first()
+        context = db.query(ScenarioContext).first()
+        
+        if personality and trait_set and context:
+            demo_scenario = Scenario(
+                title="Corporate Training Demo - Sales Negotiation",
+                disc_type="D",  # Can use any disc_type
+                personality_template_id=personality.id,
+                trait_set_id=trait_set.id,
+                scenario_context_id=context.id,
+                ai_system_prompt="You are a professional sales representative. Conduct this negotiation professionally.",
+                visibility="org",  # Org-specific visibility
+                org_id=demo_org.id,  # Tied to the organization
+                created_by_user_id=admin_user.id,
+            )
+            db.add(demo_scenario)
+            db.flush()
+            
+            # Create objectives for the demo scenario
+            demo_objectives = [
+                "Identify customer needs",
+                "Present solution benefits",
+                "Handle objections professionally",
+                "Close the sale"
+            ]
+            for objective_label in demo_objectives:
+                objective = Objective(
+                    scenario_id=demo_scenario.id,
+                    label=objective_label
+                )
+                db.add(objective)
+        
+        db.commit()
+        print(f"✓ Created demo organization 'Convora Demo Corp' with demo scenario for corporate training")
+    
+    except Exception as e:
+        print(f"✗ Error seeding demo org: {e}")
+        db.rollback()
+        raise
+
+
 def seed_database():
     """Load seed data from JSON files."""
     
@@ -195,6 +303,8 @@ def seed_database():
             create_test_users(db)
             # Always seed scenarios in case new ones are defined
             seed_scenarios(db)
+            # Always seed demo org for corporate scenario testing
+            seed_demo_org(db)
             return
         
         print("Seeding database...")
@@ -324,6 +434,9 @@ def seed_database():
         
         # Seed scenarios from definition file
         seed_scenarios(db)
+        
+        # Seed demo organization for corporate training
+        seed_demo_org(db)
         
         print("✓ Database seeding complete!")
     

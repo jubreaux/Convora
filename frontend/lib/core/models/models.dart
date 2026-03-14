@@ -5,6 +5,8 @@ class User {
   final String name;
   final String role;
   final DateTime createdAt;
+  final int? orgId;
+  final String? orgRole;
 
   User({
     required this.id,
@@ -12,6 +14,8 @@ class User {
     required this.name,
     required this.role,
     required this.createdAt,
+    this.orgId,
+    this.orgRole,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -21,6 +25,8 @@ class User {
       name: json['name'] as String,
       role: json['role'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
+      orgId: json['org_id'] as int?,
+      orgRole: json['org_role'] as String?,
     );
   }
 }
@@ -147,7 +153,7 @@ class ScenarioList {
   final String title;
   final String discType;
   final String? transactionType;
-  final bool isPublic;
+  final String visibility;
   final DateTime createdAt;
 
   ScenarioList({
@@ -155,7 +161,7 @@ class ScenarioList {
     required this.title,
     required this.discType,
     this.transactionType,
-    required this.isPublic,
+    required this.visibility,
     required this.createdAt,
   });
 
@@ -165,7 +171,7 @@ class ScenarioList {
       title: json['title'] as String,
       discType: json['disc_type'] as String,
       transactionType: json['transaction_type'] as String?,
-      isPublic: json['is_public'] as bool,
+      visibility: json['visibility'] as String? ?? 'personal',
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }

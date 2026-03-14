@@ -2,9 +2,10 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from datetime import datetime
 from app.database import get_db
-from app.models import Session as DBSession, Message, Scenario, PersonalityTemplate, TraitSet, SessionObjective, Objective, User, SessionScoreEvent
+from app.models import Session as DBSession, Message, Scenario, PersonalityTemplate, TraitSet, SessionObjective, Objective, User, SessionScoreEvent, OrgMember
 from app.schemas import (
     SessionCreateRequest, SessionMessageRequest, SessionMessageResponse,
     SessionEndResponse, SessionHistoryResponse, MessageResponse,
@@ -19,6 +20,32 @@ from app.services.tts_service import synthesize_reply, encode_audio_base64
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 
 
+def _get_user_org_ids(user: User, db: Session) -> list[int]:
+    """Get all organization IDs the user is an active member of."""
+    org_memberships = db.query(OrgMember).filter(
+        OrgMember.user_id == user.id,
+        OrgMember.is_active == True
+    ).all()
+    return [member.org_id for member in org_memberships]
+
+
+def _can_access_scenario(scenario: Scenario, current_user: User, user_org_ids: list[int]) -> bool:
+    """Check if user has access to a scenario based on visibility rules."""
+    # Always accessible: default or public scenarios
+    if scenario.visibility in ["default", "public"]:
+        return True
+    
+    # Personal scenarios: only if user created it
+    if scenario.visibility == "personal":
+        return scenario.created_by_user_id == current_user.id
+    
+    # Org scenarios: only if user is in that org
+    if scenario.visibility == "org":
+        return scenario.org_id in user_org_ids
+    
+    return False
+
+
 @router.post("", response_model=dict)
 async def create_session(
     request: SessionCreateRequest,
@@ -31,7 +58,9 @@ async def create_session(
     if not scenario:
         raise HTTPException(status_code=404, detail="Scenario not found")
     
-    if not scenario.is_public and scenario.created_by_user_id != current_user.id:
+    # Check access using visibility rules
+    user_org_ids = _get_user_org_ids(current_user, db)
+    if not _can_access_scenario(scenario, current_user, user_org_ids):
         raise HTTPException(status_code=403, detail="Access denied")
     
     # Create session

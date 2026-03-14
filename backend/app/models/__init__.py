@@ -80,9 +80,9 @@ class Scenario(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
     disc_type = Column(String(1), nullable=False)  # "D", "I", "S", "C"
-    personality_template_id = Column(Integer, ForeignKey("personality_templates.id"), nullable=False)
-    trait_set_id = Column(Integer, ForeignKey("trait_sets.id"), nullable=False)
-    scenario_context_id = Column(Integer, ForeignKey("scenario_contexts.id"), nullable=False)
+    personality_template_id = Column(Integer, ForeignKey("personality_templates.id"), nullable=True)
+    trait_set_id = Column(Integer, ForeignKey("trait_sets.id"), nullable=True)
+    scenario_context_id = Column(Integer, ForeignKey("scenario_contexts.id"), nullable=True)
     ai_system_prompt = Column(Text, nullable=False)
     visibility = Column(String(20), default="personal", nullable=False)  # "personal", "org", "public"
     org_id = Column(Integer, ForeignKey("organizations.id"), nullable=True)  # Only set if visibility="org"

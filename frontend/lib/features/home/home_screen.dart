@@ -10,12 +10,37 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scenariosAsync = ref.watch(scenariosProvider);
+    final authState = ref.watch(authProvider);
+    final user = authState.user;
+    final userOrgId = user?.orgId;
+    final userOrgRole = user?.orgRole;
 
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Convora Training'),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Convora Training'),
+              if (userOrgId != null && userOrgRole != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.white12,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Corporate Account • ${userOrgRole.toUpperCase()}',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ),
+            ],
+          ),
           actions: [
             PopupMenuButton(
               itemBuilder: (context) => [
@@ -107,10 +132,36 @@ class _ScenariosTab extends ConsumerWidget {
                 return ListTile(
                   title: Text(scenario.title),
                   subtitle: Text(_getDiscDescription(scenario.discType)),
-                  trailing: Chip(
-                    label: Text(scenario.discType),
-                    backgroundColor:
-                        _getDiscColor(scenario.discType),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Visibility badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _getVisibilityColor(scenario.visibility).withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: _getVisibilityColor(scenario.visibility),
+                            width: 0.5,
+                          ),
+                        ),
+                        child: Text(
+                          _getVisibilityLabel(scenario.visibility),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: _getVisibilityColor(scenario.visibility),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // DISC type chip
+                      Chip(
+                        label: Text(scenario.discType),
+                        backgroundColor: _getDiscColor(scenario.discType),
+                      ),
+                    ],
                   ),
                   onTap: () => _startSession(context, ref, scenario.id, scenario.title),
                 );
@@ -162,6 +213,36 @@ class _ScenariosTab extends ConsumerWidget {
         return Colors.blue.shade300;
       default:
         return Colors.grey.shade300;
+    }
+  }
+
+  Color _getVisibilityColor(String visibility) {
+    switch (visibility.toLowerCase()) {
+      case 'personal':
+        return Colors.purple;
+      case 'org':
+        return Colors.indigo;
+      case 'default':
+        return Colors.cyan;
+      case 'public':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _getVisibilityLabel(String visibility) {
+    switch (visibility.toLowerCase()) {
+      case 'personal':
+        return 'Personal';
+      case 'org':
+        return 'Organization';
+      case 'default':
+        return 'Platform';
+      case 'public':
+        return 'Public';
+      default:
+        return visibility;
     }
   }
 }

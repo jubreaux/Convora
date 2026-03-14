@@ -18,10 +18,34 @@ export interface Scenario {
   id: number;
   title: string;
   disc_type: 'D' | 'I' | 'S' | 'C';
-  is_public: boolean;
+  visibility: 'personal' | 'org' | 'default' | 'public';
   created_by_user_id?: number | null;
   created_at?: string;
   ai_system_prompt?: string;
+}
+
+export interface ScenarioOwnerInfo {
+  id: number;
+  name: string;
+  type: 'user' | 'org' | 'system';
+}
+
+export interface AdminScenario {
+  id: number;
+  title: string;
+  disc_type: 'D' | 'I' | 'S' | 'C';
+  visibility: 'personal' | 'org' | 'public';
+  owner: ScenarioOwnerInfo;
+  created_at: string;
+  created_by_user_id?: number | null;
+  org_id?: number | null;
+}
+
+export interface AdminScenariosListResponse {
+  total: number;
+  scenarios: AdminScenario[];
+  offset: number;
+  limit: number;
 }
 
 export interface PersonalityTemplate {
@@ -78,11 +102,12 @@ export interface ScenarioDetail extends Scenario {
 export interface ScenarioCreateRequest {
   title: string;
   disc_type: 'D' | 'I' | 'S' | 'C';
-  is_public: boolean;
+  visibility: 'personal' | 'org' | 'default' | 'public';
   ai_system_prompt: string;
   personality_template_id?: number;
   trait_set_id?: number;
   scenario_context_id?: number;
+  org_id?: number | null;
   objectives?: ObjectiveFormItem[];
 }
 
@@ -133,6 +158,9 @@ export interface UserStats {
   avg_session_score: number;
   last_session_date?: string | null;
   completed_objectives: number;
+  org_id?: number | null;
+  org_role?: string | null;
+  org_name?: string | null;
 }
 
 export interface UsersListResponse {

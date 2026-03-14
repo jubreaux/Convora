@@ -4,8 +4,6 @@ import {
   ArrowLeft,
   Save,
   Trash2,
-  Globe,
-  Lock,
   Plus,
   X,
   Loader,
@@ -41,7 +39,7 @@ const ScenarioDetail: React.FC = () => {
   // Form states
   const [title, setTitle] = useState('');
   const [discType, setDiscType] = useState<'D' | 'I' | 'S' | 'C'>('D');
-  const [isPublic, setIsPublic] = useState(false);
+  const [visibility, setVisibility] = useState<'personal' | 'org' | 'default' | 'public'>('personal');
   const [aiSystemPrompt, setAiSystemPrompt] = useState('');
   const [personalityTemplateId, setPersonalityTemplateId] = useState<number | ''>('');
   const [traitSetId, setTraitSetId] = useState<number | ''>('');
@@ -73,7 +71,7 @@ const ScenarioDetail: React.FC = () => {
       // Populate form
       setTitle(scenarioData.title);
       setDiscType(scenarioData.disc_type);
-      setIsPublic(scenarioData.is_public);
+      setVisibility(scenarioData.visibility);
       setAiSystemPrompt(scenarioData.ai_system_prompt ?? '');
       setPersonalityTemplateId(scenarioData.personality_template_id ?? '');
       setTraitSetId(scenarioData.trait_set_id ?? '');
@@ -99,6 +97,8 @@ const ScenarioDetail: React.FC = () => {
 
   const markDirty = () => setIsDirty(true);
 
+  const isPublic = visibility !== 'personal';
+
   const handleSave = async () => {
     if (!title.trim()) {
       toast.error('Title is required');
@@ -109,7 +109,7 @@ const ScenarioDetail: React.FC = () => {
       const payload = {
         title: title.trim(),
         disc_type: discType,
-        is_public: isPublic,
+        visibility: visibility,
         ai_system_prompt: aiSystemPrompt,
         personality_template_id: personalityTemplateId !== '' ? Number(personalityTemplateId) : undefined,
         trait_set_id: traitSetId !== '' ? Number(traitSetId) : undefined,
@@ -142,17 +142,6 @@ const ScenarioDetail: React.FC = () => {
     } catch (err: any) {
       toast.error('Failed to delete scenario');
       setDeleting(false);
-    }
-  };
-
-  const handleTogglePublic = async () => {
-    try {
-      const updated = await api.toggleScenarioPublic(Number(scenarioId));
-      setIsPublic(updated.is_public);
-      setScenario((prev) => prev ? { ...prev, is_public: updated.is_public } : prev);
-      toast.success(`Scenario is now ${updated.is_public ? 'public' : 'private'}`);
-    } catch (err: any) {
-      toast.error('Failed to toggle visibility');
     }
   };
 
@@ -208,18 +197,20 @@ const ScenarioDetail: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-2">
-          {/* Public/Private toggle */}
-          <button
-            onClick={handleTogglePublic}
-            className={`flex items-center space-x-2 px-3 py-2 rounded-lg border text-sm font-medium transition ${
-              isPublic
-                ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
-                : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
-            }`}
+          {/* Visibility Selector */}
+          <select
+            value={visibility}
+            onChange={(e) => {
+              setVisibility(e.target.value as 'personal' | 'org' | 'default' | 'public');
+              markDirty();
+            }}
+            className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
           >
-            {isPublic ? <Globe size={16} /> : <Lock size={16} />}
-            <span>{isPublic ? 'Public' : 'Private'}</span>
-          </button>
+            <option value="personal">Personal (Only me)</option>
+            <option value="org">Organization (Org members)</option>
+            <option value="default">Default (Platform provided)</option>
+            <option value="public">Public (Everyone)</option>
+          </select>
 
           <button
             onClick={handleDelete}

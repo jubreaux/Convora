@@ -169,11 +169,11 @@ class ScenarioDetailResponse(BaseModel):
 class ScenarioCreate(BaseModel):
     title: str
     disc_type: str  # "D", "I", "S", "C"
-    personality_template_id: int
-    trait_set_id: int
-    scenario_context_id: int
+    personality_template_id: Optional[int] = None  # Auto-defaults to first available if omitted
+    trait_set_id: Optional[int] = None  # Auto-defaults to first available if omitted
+    scenario_context_id: Optional[int] = None  # Auto-defaults to first available if omitted
     ai_system_prompt: str
-    objectives: List[ObjectiveCreate]
+    objectives: List[ObjectiveCreate] = []
 
 
 # ===== Session Schemas =====

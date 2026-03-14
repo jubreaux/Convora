@@ -148,6 +148,7 @@ const UserList: React.FC = () => {
                 <tr>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Account Type</th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">Sessions</th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">Score</th>
                   <th className="px-6 py-3 text-right text-sm font-semibold text-gray-900">Avg Score</th>
@@ -164,6 +165,21 @@ const UserList: React.FC = () => {
                   >
                     <td className="px-6 py-4 text-sm text-gray-900">{user.email}</td>
                     <td className="px-6 py-4 text-sm text-gray-700">{user.name}</td>
+                    <td className="px-6 py-4 text-sm">
+                      {user.org_role ? (
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+                          user.org_role === 'org_admin' 
+                            ? 'bg-purple-100 text-purple-800' 
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {user.org_role === 'org_admin' ? '🏢 Corp Admin' : '👤 Corp Employee'}
+                        </span>
+                      ) : (
+                        <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                          Personal
+                        </span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-sm text-gray-700 text-right">{user.total_sessions}</td>
                     <td className="px-6 py-4 text-sm text-gray-700 text-right font-semibold">{user.total_score}</td>
                     <td className="px-6 py-4 text-sm text-gray-700 text-right">{user.avg_session_score.toFixed(1)}</td>

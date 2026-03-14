@@ -40,7 +40,7 @@ class DashboardScreen extends ConsumerWidget {
                   visualDensity: VisualDensity.compact,
                 ),
                 onTap: () {
-                  context.push('/home');
+                  context.push('/history');
                 },
               ),
               PopupMenuItem(
@@ -126,7 +126,23 @@ class DashboardScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 24),
-
+              // CTA Button
+              SizedBox(
+                height: 56,
+                child: ElevatedButton.icon(
+                  onPressed: () => context.push('/scenarios'),
+                  icon: const Icon(Icons.chat_bubble_outline_rounded),
+                  label: const Text('Start a Conversation'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
               // Key Stats Grid (2x2)
               GridView.count(
                 crossAxisCount: 2,
@@ -310,23 +326,6 @@ class DashboardScreen extends ConsumerWidget {
                     const SizedBox(height: 32),
                   ],
                 ),
-              // CTA Button
-              SizedBox(
-                height: 56,
-                child: ElevatedButton.icon(
-                  onPressed: () => context.push('/home'),
-                  icon: const Icon(Icons.chat_bubble_outline_rounded),
-                  label: const Text('Start a Conversation'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
             ],
           ),
         ),

@@ -271,7 +271,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
+  late TextEditingController _companyNameController;
   bool _obscurePassword = true;
+  String _accountType = 'personal'; // 'personal' or 'company'
 
   @override
   void initState() {
@@ -279,6 +281,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     _nameController = TextEditingController();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
+    _companyNameController = TextEditingController();
   }
 
   @override
@@ -286,6 +289,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _companyNameController.dispose();
     super.dispose();
   }
 
@@ -293,11 +297,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final name = _nameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
+    final companyName = _companyNameController.text.trim();
 
     if (name.isEmpty || email.isEmpty || password.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
+        const SnackBar(content: Text('Please fill in all required fields')),
+      );
+      return;
+    }
+
+    if (_accountType == 'company' && companyName.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your company name')),
       );
       return;
     }
@@ -306,6 +319,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           name: name,
           email: email,
           password: password,
+          accountType: _accountType,
+          companyName: _accountType == 'company' ? companyName : null,
         );
 
     if (!mounted) return;
@@ -380,8 +395,55 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 obscureText: _obscurePassword,
               ),
+              const SizedBox(height: 24),
+              // Account type selection
+              Text(
+                'Account Type',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 12),
-              // Server URL row — tap to change the backend server
+              Row(
+                children: [
+                  Expanded(
+                    child: SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment<String>(
+                          value: 'personal',
+                          label: Text('Personal'),
+                          icon: Icon(Icons.person),
+                        ),
+                        ButtonSegment<String>(
+                          value: 'company',
+                          label: Text('Company'),
+                          icon: Icon(Icons.business),
+                        ),
+                      ],
+                      selected: <String>{_accountType},
+                      onSelectionChanged: (Set<String> newSelection) {
+                        setState(() {
+                          _accountType = newSelection.first;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Company name field (only visible for company accounts)
+              if (_accountType == 'company')
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextField(
+                      controller: _companyNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Company Name',
+                        hintText: 'Your organization name',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
               const _ServerTile(),
               const SizedBox(height: 24),
               ElevatedButton(

@@ -90,6 +90,8 @@ class ConvoraApiClient {
     required String email,
     required String password,
     required String name,
+    required String accountType,
+    String? companyName,
   }) async {
     final response = await dioClient.dio.post(
       '/auth/register',
@@ -97,6 +99,8 @@ class ConvoraApiClient {
         'email': email,
         'password': password,
         'name': name,
+        'account_type': accountType,
+        if (companyName != null) 'company_name': companyName,
       },
     );
     final authResponse = AuthResponse.fromJson(response.data);
