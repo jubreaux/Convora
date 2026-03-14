@@ -160,6 +160,61 @@ class ConvoraApiClient {
     return ScenarioList.fromJson(response.data);
   }
 
+  /// Create a new scenario
+  Future<ScenarioList> createScenario({
+    required String title,
+    required String discType,
+    required String aiSystemPrompt,
+    required String visibility,
+    int? personalityTemplateId,
+    int? traitSetId,
+    int? scenarioContextId,
+    List<Map<String, dynamic>>? objectives,
+  }) async {
+    final response = await dioClient.dio.post(
+      '/scenarios',
+      data: {
+        'title': title,
+        'disc_type': discType,
+        'ai_system_prompt': aiSystemPrompt,
+        'visibility': visibility,
+        'personality_template_id': personalityTemplateId,
+        'trait_set_id': traitSetId,
+        'scenario_context_id': scenarioContextId,
+        'objectives': objectives ?? [],
+      },
+    );
+    return ScenarioList.fromJson(response.data);
+  }
+
+  /// Update an existing scenario
+  Future<ScenarioList> updateScenario({
+    required int scenarioId,
+    required String title,
+    required String discType,
+    required String aiSystemPrompt,
+    required String visibility,
+    int? personalityTemplateId,
+    int? traitSetId,
+    int? scenarioContextId,
+    List<Map<String, dynamic>>? objectives,
+  }) async {
+    final response = await dioClient.dio.put(
+      '/scenarios/$scenarioId',
+      data: {
+        'title': title,
+        'disc_type': discType,
+        'ai_system_prompt': aiSystemPrompt,
+        'visibility': visibility,
+        'personality_template_id': personalityTemplateId,
+        'trait_set_id': traitSetId,
+        'scenario_context_id': scenarioContextId,
+        'objectives': objectives ?? [],
+      },
+    );
+    return ScenarioList.fromJson(response.data);
+  }
+
   // ===== Sessions =====
   Future<Map<String, dynamic>> createSession(int scenarioId) async {
     final response = await dioClient.dio.post(

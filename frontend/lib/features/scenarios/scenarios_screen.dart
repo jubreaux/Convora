@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:convora/core/providers/providers.dart';
+import 'create_scenario_sheet.dart';
+import 'edit_scenario_sheet.dart';
 
 class ScenariosScreen extends ConsumerWidget {
   const ScenariosScreen({super.key});
@@ -124,6 +126,21 @@ class ScenariosScreen extends ConsumerWidget {
                                           ),
                                         ),
                                       ),
+                                      const SizedBox(width: 8),
+                                      // Edit button (only for personal scenarios)
+                                      if (scenario.visibility == 'personal')
+                                        IconButton(
+                                          onPressed: () => showModalBottomSheet(
+                                            context: context,
+                                            isScrollControlled: true,
+                                            builder: (context) =>
+                                                EditScenarioSheet(scenario: scenario),
+                                          ),
+                                          icon: const Icon(Icons.edit_outlined),
+                                          iconSize: 20,
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                        ),
                                     ],
                                   ),
                                   const SizedBox(height: 12),
@@ -162,12 +179,11 @@ class ScenariosScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Phase 5 - Open create scenario sheet
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Create scenario coming in Phase 5')),
-          );
-        },
+        onPressed: () => showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          builder: (context) => const CreateScenarioSheet(),
+        ),
         backgroundColor: Colors.teal,
         child: const Icon(Icons.add),
       ),
