@@ -242,29 +242,35 @@ class _TrainingSessionScreenState
         title: Text(sessionState.scenarioTitle ?? 'Training Session'),
         actions: [
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                constraints: const BoxConstraints(maxWidth: 80),
-                child: Text(
-                  'Score: ${sessionState.currentScore}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.teal,
+            padding: const EdgeInsets.all(8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Score',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.teal,
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                  Text(
+                    '${sessionState.currentScore}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
