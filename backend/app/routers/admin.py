@@ -93,7 +93,10 @@ async def list_users(
         func.count(SessionModel.id).label('total_sessions'),
         func.coalesce(func.sum(SessionModel.score), 0).label('total_score'),
         func.max(SessionModel.started_at).label('last_session_date')
-    ).filter(SessionModel.user_id.in_(user_ids)).group_by(SessionModel.user_id).all()
+    ).filter(
+        SessionModel.user_id.in_(user_ids),
+        SessionModel.status == "completed"
+    ).group_by(SessionModel.user_id).all()
     session_map = {row.user_id: row for row in session_agg}
 
     obj_agg = db.query(
@@ -155,7 +158,10 @@ async def get_user_detail(
         func.count(SessionModel.id),
         func.coalesce(func.sum(SessionModel.score), 0),
         func.max(SessionModel.started_at)
-    ).filter(SessionModel.user_id == user.id).one()
+    ).filter(
+        SessionModel.user_id == user.id,
+        SessionModel.status == "completed"
+    ).one()
 
     total_sessions = session_stats[0] or 0
     total_score = int(session_stats[1]) if session_stats[1] else 0
