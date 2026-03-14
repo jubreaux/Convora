@@ -147,18 +147,22 @@ def seed_data(_init_db):
 
 @pytest.fixture(scope="session")
 def test_user(_init_db):
-    """Register a persistent test user directly in the DB."""
+    """Get the real test user from the database."""
     db = TestSessionLocal()
     try:
-        user = User(
-            email="tester@convora.test",
-            password_hash=hash_password("TestPass123!"),
-            name="Test User",
-            role="user",
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+        # Use the real test user created in seed data
+        user = db.query(User).filter(User.email == "test@example.com").first()
+        if not user:
+            # Create if it doesn't exist
+            user = User(
+                email="test@example.com",
+                password_hash=hash_password("password123"),
+                name="Test User",
+                role="user",
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
         return user
     finally:
         db.close()
