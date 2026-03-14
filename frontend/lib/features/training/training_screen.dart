@@ -253,13 +253,17 @@ class _TrainingSessionScreenState
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
                 ),
+                constraints: const BoxConstraints(maxWidth: 80),
                 child: Text(
                   'Score: ${sessionState.currentScore}',
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: Colors.teal,
                   ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),
