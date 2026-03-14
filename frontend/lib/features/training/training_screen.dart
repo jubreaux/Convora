@@ -242,32 +242,35 @@ class _TrainingSessionScreenState
         title: Text(sessionState.scenarioTitle ?? 'Training Session'),
         actions: [
           Padding(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Container(
               padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
+                horizontal: 10,
+                vertical: 2,
               ),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
                     'Score',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 8,
                       color: Colors.teal,
+                      height: 1.0,
                     ),
                   ),
                   Text(
                     '${sessionState.currentScore}',
                     style: const TextStyle(
-                      fontSize: 18,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Colors.teal,
+                      height: 1.0,
                     ),
                   ),
                 ],
