@@ -158,6 +158,43 @@ async def get_user_history(
     return history
 
 
+@router.get("/users/{user_id}/history", response_model=list[SessionHistoryResponse])
+async def get_user_sessions_admin(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get a specific user's session history (admin only)."""
+    # Verify admin
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Verify user exists
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    sessions = db.query(DBSession).filter(
+        DBSession.user_id == user_id,
+        DBSession.status == "completed"
+    ).order_by(DBSession.ended_at.desc()).all()
+    
+    history = []
+    for session in sessions:
+        scenario = db.query(Scenario).filter(Scenario.id == session.scenario_id).first()
+        history.append(SessionHistoryResponse(
+            id=session.id,
+            scenario_id=session.scenario_id,
+            scenario_title=scenario.title,
+            status=session.status,
+            score=session.score,
+            started_at=session.started_at,
+            ended_at=session.ended_at
+        ))
+    
+    return history
+
+
 @router.get("/{session_id}/review", response_model=SessionReviewResponse)
 async def get_session_review(
     session_id: int,
