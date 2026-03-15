@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from app.database import engine, Base
 from app.models import (
     User, PersonalityTemplate, TraitSet, ScenarioContext,
@@ -46,6 +48,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Global exception handler for validation errors
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    """Log validation errors with request details for debugging."""
+    print(f"[VALIDATION_ERROR] Path: {request.url.path}")
+    print(f"[VALIDATION_ERROR] Method: {request.method}")
+    print(f"[VALIDATION_ERROR] Errors: {exc.errors()}")
+    print(f"[VALIDATION_ERROR] Body: {exc.body}")
+    
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": exc.errors(),
+            "body": str(exc.body) if exc.body else None
+        },
+    )
 
 # Include routers
 app.include_router(auth.router)
