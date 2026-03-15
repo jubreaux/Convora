@@ -270,17 +270,32 @@ upload_apk_to_s3() {
   
   log_info "Uploading APK to: ${s3_apk_path}"
   
+  local apk_content_type="application/vnd.android.package-archive"
+
   if aws s3 cp "$apk_file" "${s3_apk_path}convora-${GIT_COMMIT}-${TIMESTAMP}.apk" \
     --region "${AWS_REGION}" \
+    --content-type "${apk_content_type}" \
+    --content-disposition "attachment; filename=\"convora-${GIT_COMMIT}.apk\"" \
     --cache-control "public, max-age=86400"; then
-    
-    log_info "Updating latest APK symlink..."
+
+    log_info "Updating latest APK..."
     aws s3 cp "$apk_file" "${s3_apk_path}convora-latest.apk" \
       --region "${AWS_REGION}" \
+      --content-type "${apk_content_type}" \
+      --content-disposition "attachment; filename=\"convora-latest.apk\"" \
       --cache-control "public, max-age=3600"
-    
+
+    # Invalidate CloudFront cache for the APK so new version is served immediately
+    local cf_dist="E2N031064FD3ZI"
+    log_info "Invalidating CloudFront cache for APK..."
+    aws --no-cli-pager cloudfront create-invalidation \
+      --distribution-id "${cf_dist}" \
+      --paths "/downloads/*" \
+      --query 'Invalidation.{Id:Id,Status:Status}' \
+      --output text 2>&1 || log_warn "CloudFront APK invalidation failed"
+
     log_info "APK uploaded to S3 successfully ✅"
-    log_info "Latest APK URL: https://${S3_ADMIN_PATH}.${S3_BUCKET_NAME}/downloads/convora-latest.apk"
+    log_info "Latest APK URL: https://admin.convora.customertest.digitalbullet.net/downloads/convora-latest.apk"
     return 0
   else
     log_error "Failed to upload APK to S3"
