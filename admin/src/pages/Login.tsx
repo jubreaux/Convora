@@ -25,7 +25,17 @@ const Login: React.FC = () => {
         return;
       }
 
-      // Redirect to dashboard
+      // Verify token is valid before navigating (fixes race condition)
+      try {
+        await api.getCurrentUser();
+      } catch (verifyErr) {
+        setError('Token verification failed. Please try again.');
+        api.logout();
+        setLoading(false);
+        return;
+      }
+
+      // Redirect to dashboard - token is now verified
       navigate('/dashboard');
     } catch (err: any) {
       const errorMsg = err.response?.data?.detail || 'Login failed. Please check your credentials.';
