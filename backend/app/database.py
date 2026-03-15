@@ -7,7 +7,9 @@ settings = get_settings()
 # Create database engine
 engine = create_engine(
     settings.DATABASE_URL,
-    echo=False
+    echo=False,
+    pool_pre_ping=True,   # Test connections before use — fixes "MySQL has gone away"
+    pool_recycle=1800,    # Recycle connections every 30 min (< MariaDB's wait_timeout)
 )
 
 # Session factory
