@@ -2,6 +2,10 @@
 
 # ECR Push Script for Convora
 # This script builds and pushes Docker images to Amazon ECR
+# 
+# IMPORTANT: This script builds images for linux/amd64 architecture.
+# It requires Docker buildx to be enabled for cross-platform building on Apple Silicon Macs.
+# Docker buildx is included in Docker Desktop by default.
 
 set -e
 
@@ -53,6 +57,12 @@ check_prerequisites() {
     exit 1
   fi
   
+  # Check if docker buildx is available (required for cross-platform builds on Apple Silicon)
+  if ! docker buildx version &>/dev/null; then
+    log_warn "Docker buildx not detected. This is required for building linux/amd64 images on Apple Silicon."
+    log_info "For Docker Desktop, buildx is usually available by default. Try: docker buildx create --use"
+  fi
+  
   log_info "All prerequisites met."
 }
 
@@ -93,9 +103,9 @@ build_and_push() {
   local latest_tag="${image_uri}:latest"
   local timestamped_tag="${image_uri}:${GIT_COMMIT}-${TIMESTAMP}"
   
-  log_info "Building Docker image: $service_name"
-  if docker build -t "${latest_tag}" -t "${timestamped_tag}" -f "${dockerfile_path}" "$(dirname "${dockerfile_path}")"; then
-    log_info "Build successful for $service_name"
+  log_info "Building Docker image for linux/amd64: $service_name"
+  if docker build --platform linux/amd64 -t "${latest_tag}" -t "${timestamped_tag}" -f "${dockerfile_path}" "$(dirname "${dockerfile_path}")"; then
+    log_info "Build successful for $service_name (linux/amd64)"
   else
     log_error "Build failed for $service_name"
     return 1
@@ -175,6 +185,7 @@ main() {
   log_info "AWS Region: $AWS_REGION"
   log_info "ECR Registry: $ECR_REGISTRY"
   log_info "Git Commit: $GIT_COMMIT"
+  log_info "Target Platform: linux/amd64 (x86_64 server-compatible)"
   
   check_prerequisites
   login_to_ecr
