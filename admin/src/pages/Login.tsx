@@ -25,11 +25,19 @@ const Login: React.FC = () => {
         return;
       }
 
-      // Verify token is valid before navigating (fixes race condition)
+      // Verify token is valid with a timeout
       try {
-        await api.getCurrentUser();
-      } catch (verifyErr) {
-        setError('Token verification failed. Please try again.');
+        // Set a 5 second timeout for verification
+        const verifyPromise = api.getCurrentUser();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Verification timeout')), 5000)
+        );
+        
+        await Promise.race([verifyPromise, timeoutPromise]);
+      } catch (verifyErr: any) {
+        console.warn('[LOGIN] Token verification issue:', verifyErr.message);
+        // If verification fails, log out and show error
+        setError(`Login failed: ${verifyErr.message}. Please try again.`);
         api.logout();
         setLoading(false);
         return;
