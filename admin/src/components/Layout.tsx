@@ -9,14 +9,41 @@ interface LayoutProps {
   user: User;
 }
 
+const APK_URL = 'https://admin.convora.customertest.digitalbullet.net/downloads/convora-latest.apk';
+
 const Layout: React.FC<LayoutProps> = ({ children, user }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [apkDownloading, setApkDownloading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     await api.logout();
     navigate('/login');
+  };
+
+  const handleApkDownload = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (apkDownloading) return;
+    setApkDownloading(true);
+    try {
+      // Fetch as blob to bypass browser cache and force a real download
+      const res = await fetch(APK_URL, { cache: 'no-store' });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'convora-latest.apk';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Fallback: direct link
+      window.location.href = APK_URL;
+    } finally {
+      setApkDownloading(false);
+    }
   };
 
   const navItems = [
@@ -61,15 +88,15 @@ const Layout: React.FC<LayoutProps> = ({ children, user }) => {
               <span>{label}</span>
             </Link>
           ))}
-          <a
-            href="https://admin.convora.customertest.digitalbullet.net/downloads/convora-latest.apk"
-            download
-            className="flex items-center space-x-3 px-4 py-3 rounded-lg transition text-green-400 hover:bg-gray-800"
+          <button
+            onClick={handleApkDownload}
+            disabled={apkDownloading}
+            className="flex items-center space-x-3 px-4 py-3 rounded-lg transition text-green-400 hover:bg-gray-800 w-full text-left disabled:opacity-60"
             title="Download Android APK"
           >
-            <Download size={20} />
-            <span>Download APK</span>
-          </a>
+            <Download size={20} className={apkDownloading ? 'animate-bounce' : ''} />
+            <span>{apkDownloading ? 'Downloading...' : 'Download APK'}</span>
+          </button>
         </nav>
       </div>
 
