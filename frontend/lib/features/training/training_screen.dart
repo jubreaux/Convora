@@ -296,9 +296,8 @@ class _TrainingSessionScreenState
       ),
       body: Column(
         children: [
-          // Objectives Panel - Show ONLY on load (before any messages appear)
-          if (sessionState.messages.isEmpty)
-            _buildObjectivesPanel(sessionState),
+          // Objectives Panel - Always visible
+          _buildObjectivesPanel(sessionState),
 
           // Messages list
           Expanded(
@@ -724,7 +723,8 @@ class _TrainingSessionScreenState
   // ---- Objectives Expandable Panel ----
   Widget _buildObjectivesPanel(ActiveSessionState sessionState) {
     final completed = sessionState.objectivesCompleted.length;
-    final isLoading = completed == 0 && sessionState.maxScore == 0;
+    final totalRemaining = sessionState.maxScore > 0 ? ((sessionState.maxScore - sessionState.currentScore) ~/ 10) : 0;
+    final total = completed + totalRemaining;
 
     return Container(
       color: Colors.blue.shade50,
@@ -734,10 +734,8 @@ class _TrainingSessionScreenState
           Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: isLoading
-                  ? null
-                  : () =>
-                      setState(() => _objectivesExpanded = !_objectivesExpanded),
+              onTap: () =>
+                  setState(() => _objectivesExpanded = !_objectivesExpanded),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 16, vertical: 12),
@@ -764,51 +762,40 @@ class _TrainingSessionScreenState
                             ),
                           ),
                           const SizedBox(height: 2),
-                          if (isLoading)
-                            Text(
-                              'Loading objectives...',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.blue.shade700,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            )
-                          else
-                            Text(
-                              '$completed / ${completed + (sessionState.maxScore > 0 ? ((sessionState.maxScore - sessionState.currentScore) ~/ 10) : 0)} completed',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.blue.shade700,
+                          Text(
+                            '$completed / $total completed',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue.shade700,
                               ),
                             ),
                         ],
                       ),
                     ),
-                    if (!isLoading)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade200.withValues(
-                              alpha: 0.3),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '$completed/${completed + (sessionState.maxScore > 0 ? ((sessionState.maxScore - sessionState.currentScore) ~/ 10) : 0)}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue.shade900,
-                          ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade200.withValues(
+                            alpha: 0.3),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '$completed/$total',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue.shade900,
                         ),
                       ),
+                    ),
                   ],
                 ),
               ),
             ),
           ),
           // Expanded content
-          if (_objectivesExpanded && !isLoading && sessionState.objectivesCompleted.isNotEmpty)
+          if (_objectivesExpanded && sessionState.objectivesCompleted.isNotEmpty)
             Padding(
               padding:
                   const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -892,7 +879,7 @@ class _TrainingSessionScreenState
                 ],
               ),
             ),
-          if (_objectivesExpanded && !isLoading &&
+          if (_objectivesExpanded &&
               sessionState.objectivesCompleted.isEmpty)
             Padding(
               padding:
