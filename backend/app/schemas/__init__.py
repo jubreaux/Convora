@@ -447,6 +447,56 @@ class OrgMemberCreate(BaseModel):
     org_role: str  # "org_admin", "team_lead", "member"
 
 
+class TeamCreate(BaseModel):
+    """Request to create a team."""
+    name: str
+    description: Optional[str] = None
+
+
+class TeamStatsResponse(BaseModel):
+    """Team with aggregate statistics."""
+    id: int
+    org_id: int
+    name: str
+    description: Optional[str] = None
+    created_at: datetime
+    member_count: int
+    total_sessions: int
+    avg_score: float
+    best_score: int
+    appointment_rate: float
+
+
+class TeamMemberDetailResponse(BaseModel):
+    """Team member with performance stats."""
+    user_id: int
+    user_name: str
+    user_email: str
+    org_role: str
+    is_team_lead: bool
+    total_sessions: int
+    avg_score: float
+    best_score: int
+    appointment_rate: float
+    joined_team_at: datetime
+
+
+class TeamAddMemberRequest(BaseModel):
+    """Request to add member to team."""
+    user_id: int
+    is_team_lead: bool = False
+
+
+class MemberSessionSummary(BaseModel):
+    """Admin-facing session summary for a member."""
+    id: int
+    scenario_title: str
+    score: int
+    appointment_set: bool
+    started_at: datetime
+    ended_at: Optional[datetime] = None
+
+
 # ===== Feedback Schemas =====
 class FeedbackCreate(BaseModel):
     """Request to submit or update scenario feedback."""

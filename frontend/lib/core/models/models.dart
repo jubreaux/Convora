@@ -700,3 +700,145 @@ class OrgMemberStats {
     );
   }
 }
+
+// ===== Team Models =====
+
+class Team {
+  final int id;
+  final int orgId;
+  final String name;
+  final String? description;
+  final DateTime createdAt;
+
+  Team({
+    required this.id,
+    required this.orgId,
+    required this.name,
+    this.description,
+    required this.createdAt,
+  });
+
+  factory Team.fromJson(Map<String, dynamic> json) {
+    return Team(
+      id: json['id'] as int,
+      orgId: json['org_id'] as int,
+      name: json['name'] as String,
+      description: json['description'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
+    );
+  }
+}
+
+class TeamStats extends Team {
+  final int memberCount;
+  final int totalSessions;
+  final double avgScore;
+  final int bestScore;
+  final double appointmentRate;
+
+  TeamStats({
+    required int id,
+    required int orgId,
+    required String name,
+    String? description,
+    required DateTime createdAt,
+    required this.memberCount,
+    required this.totalSessions,
+    required this.avgScore,
+    required this.bestScore,
+    required this.appointmentRate,
+  }) : super(
+    id: id,
+    orgId: orgId,
+    name: name,
+    description: description,
+    createdAt: createdAt,
+  );
+
+  factory TeamStats.fromJson(Map<String, dynamic> json) {
+    return TeamStats(
+      id: json['id'] as int,
+      orgId: json['org_id'] as int,
+      name: json['name'] as String,
+      description: json['description'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      memberCount: json['member_count'] as int,
+      totalSessions: json['total_sessions'] as int,
+      avgScore: (json['avg_score'] as num).toDouble(),
+      bestScore: json['best_score'] as int,
+      appointmentRate: (json['appointment_rate'] as num).toDouble(),
+    );
+  }
+}
+
+class TeamMemberDetail {
+  final int userId;
+  final String userName;
+  final String userEmail;
+  final String orgRole;
+  final bool isTeamLead;
+  final int totalSessions;
+  final double avgScore;
+  final int bestScore;
+  final double appointmentRate;
+  final DateTime joinedTeamAt;
+
+  TeamMemberDetail({
+    required this.userId,
+    required this.userName,
+    required this.userEmail,
+    required this.orgRole,
+    required this.isTeamLead,
+    required this.totalSessions,
+    required this.avgScore,
+    required this.bestScore,
+    required this.appointmentRate,
+    required this.joinedTeamAt,
+  });
+
+  factory TeamMemberDetail.fromJson(Map<String, dynamic> json) {
+    return TeamMemberDetail(
+      userId: json['user_id'] as int,
+      userName: json['user_name'] as String,
+      userEmail: json['user_email'] as String,
+      orgRole: json['org_role'] as String,
+      isTeamLead: json['is_team_lead'] as bool,
+      totalSessions: json['total_sessions'] as int,
+      avgScore: (json['avg_score'] as num).toDouble(),
+      bestScore: json['best_score'] as int,
+      appointmentRate: (json['appointment_rate'] as num).toDouble(),
+      joinedTeamAt: DateTime.parse(json['joined_team_at'] as String),
+    );
+  }
+}
+
+class MemberSessionSummary {
+  final int id;
+  final String scenarioTitle;
+  final int score;
+  final bool appointmentSet;
+  final DateTime startedAt;
+  final DateTime? endedAt;
+
+  MemberSessionSummary({
+    required this.id,
+    required this.scenarioTitle,
+    required this.score,
+    required this.appointmentSet,
+    required this.startedAt,
+    this.endedAt,
+  });
+
+  factory MemberSessionSummary.fromJson(Map<String, dynamic> json) {
+    return MemberSessionSummary(
+      id: json['id'] as int,
+      scenarioTitle: json['scenario_title'] as String,
+      score: json['score'] as int,
+      appointmentSet: json['appointment_set'] as bool,
+      startedAt: DateTime.parse(json['started_at'] as String),
+      endedAt: json['ended_at'] != null
+          ? DateTime.parse(json['ended_at'] as String)
+          : null,
+    );
+  }
+}

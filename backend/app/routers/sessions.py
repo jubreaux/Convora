@@ -297,8 +297,29 @@ async def get_session_review(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    # Allow owner or admin to review
-    if session.user_id != current_user.id and current_user.role != "admin":
+    # Allow owner, admin, or org_admin in same org to review
+    access_denied = True
+    if session.user_id == current_user.id or current_user.role == "admin":
+        access_denied = False
+    else:
+        # Check if current_user is org_admin in same org as session owner
+        session_owner_orgs = db.query(OrgMember).filter(
+            OrgMember.user_id == session.user_id,
+            OrgMember.is_active == True
+        ).all()
+        session_owner_org_ids = [m.org_id for m in session_owner_orgs]
+        
+        current_user_org_admin = db.query(OrgMember).filter(
+            OrgMember.user_id == current_user.id,
+            OrgMember.org_role == "org_admin",
+            OrgMember.is_active == True,
+            OrgMember.org_id.in_(session_owner_org_ids)
+        ).first()
+        
+        if current_user_org_admin:
+            access_denied = False
+    
+    if access_denied:
         raise HTTPException(status_code=403, detail="Access denied")
 
     scenario = db.query(Scenario).filter(Scenario.id == session.scenario_id).first()

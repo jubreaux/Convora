@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.database import get_db
-from app.models import User, Organization, OrgMember
-from app.schemas import UserRegister, UserLogin, UserSelfUpdate, UserPasswordReset, TokenResponse, UserResponse, OrgMemberCreate, OrgMemberResponse, OrgMemberStatsResponse
+from app.models import User, Organization, OrgMember, Team, TeamMember, Session as DBSession, Scenario
+from app.schemas import UserRegister, UserLogin, UserSelfUpdate, UserPasswordReset, TokenResponse, UserResponse, OrgMemberCreate, OrgMemberResponse, OrgMemberStatsResponse, TeamCreate, TeamStatsResponse, TeamMemberDetailResponse, TeamAddMemberRequest, MemberSessionSummary
 from app.utils import hash_password, verify_password, create_access_token, get_current_user
 from datetime import timedelta, datetime
 from app.config import get_settings
@@ -390,4 +390,325 @@ async def get_org_analytics(
             joined_at=m.joined_at,
         ))
 
+    return result
+
+
+# ===== Team Management Endpoints (org_admin only) =====
+
+@router.get("/org/teams", response_model=list[TeamStatsResponse])
+async def get_org_teams(
+    db: Session = Depends(get_db),
+    org_member: OrgMember = Depends(_require_org_admin)
+):
+    """List all teams in the organization with statistics."""
+    from app.models import Session as TrainingSession
+    
+    teams = db.query(Team).filter(Team.org_id == org_member.org_id).all()
+    result = []
+    
+    for team in teams:
+        members = db.query(TeamMember).filter(TeamMember.team_id == team.id).all()
+        member_ids = [m.user_id for m in members]
+        
+        sessions = db.query(TrainingSession).filter(
+            TrainingSession.user_id.in_(member_ids),
+            TrainingSession.status == "completed"
+        ).all() if member_ids else []
+        
+        total_sessions = len(sessions)
+        avg_score = round(sum(s.score for s in sessions) / total_sessions, 1) if total_sessions > 0 else 0.0
+        best_score = max((s.score for s in sessions), default=0)
+        appts = sum(1 for s in sessions if s.appointment_set)
+        appt_rate = round((appts / total_sessions) * 100, 1) if total_sessions > 0 else 0.0
+        
+        result.append(TeamStatsResponse(
+            id=team.id,
+            org_id=team.org_id,
+            name=team.name,
+            description=team.description,
+            created_at=team.created_at,
+            member_count=len(members),
+            total_sessions=total_sessions,
+            avg_score=avg_score,
+            best_score=best_score,
+            appointment_rate=appt_rate
+        ))
+    
+    return result
+
+
+@router.post("/org/teams", response_model=TeamStatsResponse)
+async def create_org_team(
+    team_data: TeamCreate,
+    db: Session = Depends(get_db),
+    org_member: OrgMember = Depends(_require_org_admin)
+):
+    """Create a new team in the organization."""
+    new_team = Team(
+        org_id=org_member.org_id,
+        name=team_data.name,
+        description=team_data.description
+    )
+    db.add(new_team)
+    db.commit()
+    db.refresh(new_team)
+    
+    return TeamStatsResponse(
+        id=new_team.id,
+        org_id=new_team.org_id,
+        name=new_team.name,
+        description=new_team.description,
+        created_at=new_team.created_at,
+        member_count=0,
+        total_sessions=0,
+        avg_score=0.0,
+        best_score=0,
+        appointment_rate=0.0
+    )
+
+
+@router.put("/org/teams/{team_id}", response_model=TeamStatsResponse)
+async def update_org_team(
+    team_id: int,
+    team_data: TeamCreate,
+    db: Session = Depends(get_db),
+    org_member: OrgMember = Depends(_require_org_admin)
+):
+    """Update a team in the organization."""
+    team = db.query(Team).filter(
+        Team.id == team_id,
+        Team.org_id == org_member.org_id
+    ).first()
+    
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    
+    team.name = team_data.name
+    team.description = team_data.description
+    db.commit()
+    db.refresh(team)
+    
+    members = db.query(TeamMember).filter(TeamMember.team_id == team.id).all()
+    member_ids = [m.user_id for m in members]
+    
+    from app.models import Session as TrainingSession
+    sessions = db.query(TrainingSession).filter(
+        TrainingSession.user_id.in_(member_ids),
+        TrainingSession.status == "completed"
+    ).all() if member_ids else []
+    
+    total_sessions = len(sessions)
+    avg_score = round(sum(s.score for s in sessions) / total_sessions, 1) if total_sessions > 0 else 0.0
+    best_score = max((s.score for s in sessions), default=0)
+    appts = sum(1 for s in sessions if s.appointment_set)
+    appt_rate = round((appts / total_sessions) * 100, 1) if total_sessions > 0 else 0.0
+    
+    return TeamStatsResponse(
+        id=team.id,
+        org_id=team.org_id,
+        name=team.name,
+        description=team.description,
+        created_at=team.created_at,
+        member_count=len(members),
+        total_sessions=total_sessions,
+        avg_score=avg_score,
+        best_score=best_score,
+        appointment_rate=appt_rate
+    )
+
+
+@router.delete("/org/teams/{team_id}")
+async def delete_org_team(
+    team_id: int,
+    db: Session = Depends(get_db),
+    org_member: OrgMember = Depends(_require_org_admin)
+):
+    """Delete a team from the organization."""
+    team = db.query(Team).filter(
+        Team.id == team_id,
+        Team.org_id == org_member.org_id
+    ).first()
+    
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    
+    # Delete all team members
+    db.query(TeamMember).filter(TeamMember.team_id == team.id).delete()
+    
+    # Delete team
+    db.delete(team)
+    db.commit()
+    
+    return {"ok": True, "message": "Team deleted"}
+
+
+@router.get("/org/teams/{team_id}/members", response_model=list[TeamMemberDetailResponse])
+async def get_team_members(
+    team_id: int,
+    db: Session = Depends(get_db),
+    org_member: OrgMember = Depends(_require_org_admin)
+):
+    """Get all members of a team with their performance stats."""
+    from app.models import Session as TrainingSession
+    
+    team = db.query(Team).filter(
+        Team.id == team_id,
+        Team.org_id == org_member.org_id
+    ).first()
+    
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    
+    team_members = db.query(TeamMember).filter(TeamMember.team_id == team.id).all()
+    result = []
+    
+    for tm in team_members:
+        user = db.query(User).filter(User.id == tm.user_id).first()
+        if not user:
+            continue
+        
+        org_member_record = db.query(OrgMember).filter(
+            OrgMember.user_id == tm.user_id,
+            OrgMember.org_id == org_member.org_id
+        ).first()
+        
+        sessions = db.query(TrainingSession).filter(
+            TrainingSession.user_id == tm.user_id,
+            TrainingSession.status == "completed"
+        ).all()
+        
+        total = len(sessions)
+        avg_score = round(sum(s.score for s in sessions) / total, 1) if total > 0 else 0.0
+        best_score = max((s.score for s in sessions), default=0)
+        appts = sum(1 for s in sessions if s.appointment_set)
+        appt_rate = round((appts / total) * 100, 1) if total > 0 else 0.0
+        
+        result.append(TeamMemberDetailResponse(
+            user_id=tm.user_id,
+            user_name=user.name,
+            user_email=user.email,
+            org_role=org_member_record.org_role if org_member_record else "member",
+            is_team_lead=tm.is_team_lead,
+            total_sessions=total,
+            avg_score=avg_score,
+            best_score=best_score,
+            appointment_rate=appt_rate,
+            joined_team_at=tm.joined_at
+        ))
+    
+    return result
+
+
+@router.post("/org/teams/{team_id}/members")
+async def add_team_member(
+    team_id: int,
+    member_data: TeamAddMemberRequest,
+    db: Session = Depends(get_db),
+    org_member: OrgMember = Depends(_require_org_admin)
+):
+    """Add a member to a team."""
+    team = db.query(Team).filter(
+        Team.id == team_id,
+        Team.org_id == org_member.org_id
+    ).first()
+    
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    
+    # Verify member exists in organization
+    org_member_record = db.query(OrgMember).filter(
+        OrgMember.org_id == org_member.org_id,
+        OrgMember.user_id == member_data.user_id,
+        OrgMember.is_active == True
+    ).first()
+    
+    if not org_member_record:
+        raise HTTPException(status_code=400, detail="User is not in this organization")
+    
+    # Check if already a team member
+    existing = db.query(TeamMember).filter(
+        TeamMember.team_id == team.id,
+        TeamMember.user_id == member_data.user_id
+    ).first()
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="User is already a member of this team")
+    
+    new_member = TeamMember(
+        team_id=team.id,
+        user_id=member_data.user_id,
+        is_team_lead=member_data.is_team_lead
+    )
+    db.add(new_member)
+    db.commit()
+    
+    return {"ok": True, "message": "Member added to team"}
+
+
+@router.delete("/org/teams/{team_id}/members/{user_id}")
+async def remove_team_member(
+    team_id: int,
+    user_id: int,
+    db: Session = Depends(get_db),
+    org_member: OrgMember = Depends(_require_org_admin)
+):
+    """Remove a member from a team."""
+    team = db.query(Team).filter(
+        Team.id == team_id,
+        Team.org_id == org_member.org_id
+    ).first()
+    
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    
+    team_member = db.query(TeamMember).filter(
+        TeamMember.team_id == team.id,
+        TeamMember.user_id == user_id
+    ).first()
+    
+    if not team_member:
+        raise HTTPException(status_code=404, detail="Team member not found")
+    
+    db.delete(team_member)
+    db.commit()
+    
+    return {"ok": True, "message": "Member removed from team"}
+
+
+@router.get("/org/members/{user_id}/sessions", response_model=list[MemberSessionSummary])
+async def get_member_sessions(
+    user_id: int,
+    db: Session = Depends(get_db),
+    org_member: OrgMember = Depends(_require_org_admin)
+):
+    """Get session history for a specific member (org admin view)."""
+    from app.models import Session as TrainingSession
+    
+    # Verify member exists in organization
+    member = db.query(OrgMember).filter(
+        OrgMember.org_id == org_member.org_id,
+        OrgMember.user_id == user_id
+    ).first()
+    
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found in organization")
+    
+    sessions = db.query(TrainingSession).filter(
+        TrainingSession.user_id == user_id
+    ).order_by(TrainingSession.started_at.desc()).all()
+    
+    result = []
+    for session in sessions:
+        scenario = db.query(Scenario).filter(Scenario.id == session.scenario_id).first()
+        scenario_title = scenario.title if scenario else f"Scenario {session.scenario_id}"
+        
+        result.append(MemberSessionSummary(
+            id=session.id,
+            scenario_title=scenario_title,
+            score=session.score,
+            appointment_set=session.appointment_set,
+            started_at=session.started_at,
+            ended_at=session.ended_at
+        ))
+    
     return result

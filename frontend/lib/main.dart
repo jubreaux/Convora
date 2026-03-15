@@ -15,7 +15,9 @@ import 'package:convora/features/session_review/session_review_screen.dart';
 import 'package:convora/features/account_setup/account_setup_screen.dart';
 import 'package:convora/features/profile/profile_screen.dart';
 import 'package:convora/features/organization/org_members_screen.dart';
-import 'package:convora/features/organization/org_analytics_screen.dart';
+import 'package:convora/features/organization/teams_overview_screen.dart';
+import 'package:convora/features/organization/team_detail_screen.dart';
+import 'package:convora/features/organization/member_sessions_screen.dart';
 
 // ===== Router Setup =====
 final routerProvider = Provider<GoRouter>((ref) {
@@ -99,7 +101,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/org-analytics',
-        builder: (context, state) => const OrgAnalyticsScreen(),
+        builder: (context, state) => const TeamsOverviewScreen(),
+      ),
+      GoRoute(
+        path: '/org-teams/:teamId',
+        builder: (context, state) => TeamDetailScreen(
+          teamId: int.parse(state.pathParameters['teamId']!),
+        ),
+      ),
+      GoRoute(
+        path: '/org-member-sessions/:userId',
+        builder: (context, state) => MemberSessionsScreen(
+          userId: int.parse(state.pathParameters['userId']!),
+        ),
       ),
     ],
   );

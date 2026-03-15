@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# ECR Push Script for Convora
+# ECR Push & S3 Deploy Script for Convora
 # This script builds and pushes Docker images to Amazon ECR
+# Plus uploads the admin web app and Flutter APK to S3/CloudFront
 # 
 # IMPORTANT: This script builds images for linux/amd64 architecture.
 # It requires Docker buildx to be enabled for cross-platform building on Apple Silicon Macs.
@@ -31,6 +32,8 @@ log_error() {
 # Configuration
 AWS_REGION="us-east-1"
 AWS_ACCOUNT_ID="${AWS_ACCOUNT_ID:-150314557466}"
+S3_BUCKET_NAME="digitalbullet.net"
+S3_ADMIN_PATH="customertest/convora/admin"
 
 ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 BACKEND_REPO="convora-backend"
@@ -179,11 +182,105 @@ build_flutter_apk() {
   fi
 }
 
+# Build React Admin Web App
+build_admin_web() {
+  log_info "Building React Admin Web App..."
+  
+  local admin_dir="./admin"
+  
+  if [ ! -d "$admin_dir" ]; then
+    log_error "Admin project directory not found: $admin_dir"
+    return 1
+  fi
+  
+  log_info "Installing dependencies and building admin app..."
+  cd "$admin_dir"
+  
+  if npm install && npm run build; then
+    log_info "Admin web app built successfully"
+    cd - > /dev/null
+    return 0
+  else
+    log_error "Admin web app build failed"
+    cd - > /dev/null
+    return 1
+  fi
+}
+
+# Upload admin web app to S3
+upload_admin_to_s3() {
+  log_info "Uploading admin web app to S3..."
+  
+  local admin_build_dir="./admin/build"
+  
+  if [ ! -d "$admin_build_dir" ]; then
+    log_error "Admin build directory not found: $admin_build_dir"
+    return 1
+  fi
+  
+  # S3 path: s3://digitalbullet.net/admin.convora.customertest/
+  local s3_path="s3://${S3_BUCKET_NAME}/${S3_ADMIN_PATH}/"
+  
+  log_info "Syncing admin build to S3: ${s3_path}"
+  
+  if aws s3 sync "$admin_build_dir" "$s3_path" \
+    --region "${AWS_REGION}" \
+    --delete \
+    --cache-control "public, max-age=3600" \
+    --exclude ".git" \
+    --exclude "node_modules"; then
+    log_info "Admin web app uploaded to S3 successfully ✅"
+    log_info "URL: https://${S3_ADMIN_PATH}.${S3_BUCKET_NAME}/"
+    return 0
+  else
+    log_error "Failed to upload admin web app to S3"
+    return 1
+  fi
+}
+
+# Upload Flutter APK to S3
+upload_apk_to_s3() {
+  log_info "Uploading Flutter APK to S3..."
+  
+  local desktop_build_dir="$HOME/Desktop/convora_builds"
+  local apk_file="${desktop_build_dir}/convora-latest.apk"
+  
+  if [ ! -f "$apk_file" ]; then
+    log_error "APK file not found: $apk_file"
+    return 1
+  fi
+  
+  # S3 path: s3://digitalbullet.net/admin.convora.customertest/downloads/
+  local s3_apk_path="s3://${S3_BUCKET_NAME}/${S3_ADMIN_PATH}/downloads/"
+  
+  log_info "Uploading APK to: ${s3_apk_path}"
+  
+  if aws s3 cp "$apk_file" "${s3_apk_path}convora-${GIT_COMMIT}-${TIMESTAMP}.apk" \
+    --region "${AWS_REGION}" \
+    --cache-control "public, max-age=86400"; then
+    
+    log_info "Updating latest APK symlink..."
+    aws s3 cp "$apk_file" "${s3_apk_path}convora-latest.apk" \
+      --region "${AWS_REGION}" \
+      --cache-control "public, max-age=3600"
+    
+    log_info "APK uploaded to S3 successfully ✅"
+    log_info "Latest APK URL: https://${S3_ADMIN_PATH}.${S3_BUCKET_NAME}/downloads/convora-latest.apk"
+    return 0
+  else
+    log_error "Failed to upload APK to S3"
+    return 1
+  fi
+}
+
 # Main execution
 main() {
-  log_info "Starting ECR push script..."
+  log_info "Starting Convora build & deploy script..."
   log_info "AWS Region: $AWS_REGION"
   log_info "ECR Registry: $ECR_REGISTRY"
+  log_info "S3 Bucket: $S3_BUCKET_NAME"
+  log_info "S3 Admin Path: $S3_ADMIN_PATH"
+  log_info "API Endpoint: https://api.convora.customertest.digitalbullet.net"
   log_info "Git Commit: $GIT_COMMIT"
   log_info "Target Platform: linux/amd64 (x86_64 server-compatible)"
   
@@ -212,7 +309,22 @@ main() {
   
   log_info "All images pushed to ECR successfully! ✅"
   log_info "Backend: ${ECR_REGISTRY}/${BACKEND_REPO}:latest"
-  log_info "Admin: ${ECR_REGISTRY}/${ADMIN_REPO}:latest"
+  log_info "Admin Container: ${ECR_REGISTRY}/${ADMIN_REPO}:latest"
+  
+  # Build and upload admin web app to S3
+  log_info ""
+  log_info "================================"
+  log_info "Building & Uploading Admin Web App to S3"
+  log_info "================================"
+  if build_admin_web; then
+    if upload_admin_to_s3; then
+      log_info "Admin web app deployed successfully ✅"
+    else
+      log_warn "Admin web app built but S3 upload failed"
+    fi
+  else
+    log_warn "Admin web app build failed (skipping S3 upload)"
+  fi
   
   # Build Flutter APK
   log_info ""
@@ -220,10 +332,55 @@ main() {
   log_info "Building Flutter APK..."
   log_info "================================"
   if build_flutter_apk; then
-    log_info "Flutter APK built and saved successfully ✅"
+    log_info "Flutter APK built successfully ✅"
+    
+    # Upload APK to S3
+    log_info ""
+    log_info "================================"
+    log_info "Uploading Flutter APK to S3"
+    log_info "================================"
+    if upload_apk_to_s3; then
+      log_info "Flutter APK deployed successfully ✅"
+    else
+      log_warn "Flutter APK built but S3 upload failed"
+    fi
   else
     log_warn "Flutter APK build skipped or failed (Flutter SDK may not be installed)"
   fi
+  
+  # Update CloudFront distribution
+  log_info ""
+  log_info "================================"
+  log_info "Updating CloudFront Distribution"
+  log_info "================================"
+  if python3 "$(dirname "$0")/update_cloudfront.py"; then
+    log_info "CloudFront updated successfully ✅"
+  else
+    log_warn "CloudFront update failed (distribution may already be configured)"
+  fi
+  
+  # Update Route53 DNS
+  log_info ""
+  log_info "================================"
+  log_info "Updating Route53 DNS"
+  log_info "================================"
+  if python3 "$(dirname "$0")/update_route53.py"; then
+    log_info "Route53 DNS updated successfully ✅"
+  else
+    log_warn "Route53 update failed (DNS may already be configured)"
+  fi
+  
+  log_info ""
+  log_info "================================"
+  log_info "✅ Build & Deploy Complete!"
+  log_info "================================"
+  log_info ""
+  log_info "Deployed artifacts:"
+  log_info "  Backend Container: ${ECR_REGISTRY}/${BACKEND_REPO}:latest"
+  log_info "  Admin Container: ${ECR_REGISTRY}/${ADMIN_REPO}:latest"
+  log_info "  Admin Web App: https://${S3_ADMIN_PATH}.${S3_BUCKET_NAME}/"
+  log_info "  API Endpoint: https://api.convora.customertest.digitalbullet.net"
+  log_info "  Flutter APK: https://${S3_ADMIN_PATH}.${S3_BUCKET_NAME}/downloads/convora-latest.apk"
 }
 
 # Run main function

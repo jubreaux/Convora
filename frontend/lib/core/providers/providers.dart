@@ -369,6 +369,29 @@ final orgAnalyticsProvider = FutureProvider<List<OrgMemberStats>>((ref) async {
   return await apiClient.getOrgAnalytics();
 });
 
+// ===== Team Management Providers =====
+
+final orgTeamsProvider = FutureProvider<List<TeamStats>>((ref) async {
+  final authState = ref.watch(authProvider);
+  if (!authState.isAuthenticated) throw Exception('Not authenticated');
+  final apiClient = ref.watch(apiClientProvider);
+  return await apiClient.getOrgTeams();
+});
+
+final teamMembersProvider = FutureProvider.family<List<TeamMemberDetail>, int>((ref, teamId) async {
+  final authState = ref.watch(authProvider);
+  if (!authState.isAuthenticated) throw Exception('Not authenticated');
+  final apiClient = ref.watch(apiClientProvider);
+  return await apiClient.getTeamMembers(teamId);
+});
+
+final memberSessionsProvider = FutureProvider.family<List<MemberSessionSummary>, int>((ref, userId) async {
+  final authState = ref.watch(authProvider);
+  if (!authState.isAuthenticated) throw Exception('Not authenticated');
+  final apiClient = ref.watch(apiClientProvider);
+  return await apiClient.getMemberSessions(userId);
+});
+
 // ===== Active Session State =====
 class ActiveSessionState {
   final int? sessionId;

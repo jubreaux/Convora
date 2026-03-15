@@ -348,4 +348,67 @@ class ConvoraApiClient {
         .map((m) => OrgMemberStats.fromJson(m))
         .toList();
   }
+
+  // ===== Team Management Methods =====
+
+  Future<List<TeamStats>> getOrgTeams() async {
+    final response = await dioClient.dio.get('/auth/org/teams');
+    return (response.data as List)
+        .map((t) => TeamStats.fromJson(t))
+        .toList();
+  }
+
+  Future<TeamStats> createOrgTeam(String name, String? description) async {
+    final response = await dioClient.dio.post(
+      '/auth/org/teams',
+      data: {
+        'name': name,
+        'description': description,
+      },
+    );
+    return TeamStats.fromJson(response.data);
+  }
+
+  Future<TeamStats> updateOrgTeam(int teamId, String name, String? description) async {
+    final response = await dioClient.dio.put(
+      '/auth/org/teams/$teamId',
+      data: {
+        'name': name,
+        'description': description,
+      },
+    );
+    return TeamStats.fromJson(response.data);
+  }
+
+  Future<void> deleteOrgTeam(int teamId) async {
+    await dioClient.dio.delete('/auth/org/teams/$teamId');
+  }
+
+  Future<List<TeamMemberDetail>> getTeamMembers(int teamId) async {
+    final response = await dioClient.dio.get('/auth/org/teams/$teamId/members');
+    return (response.data as List)
+        .map((m) => TeamMemberDetail.fromJson(m))
+        .toList();
+  }
+
+  Future<void> addTeamMember(int teamId, int userId, bool isTeamLead) async {
+    await dioClient.dio.post(
+      '/auth/org/teams/$teamId/members',
+      data: {
+        'user_id': userId,
+        'is_team_lead': isTeamLead,
+      },
+    );
+  }
+
+  Future<void> removeTeamMember(int teamId, int userId) async {
+    await dioClient.dio.delete('/auth/org/teams/$teamId/members/$userId');
+  }
+
+  Future<List<MemberSessionSummary>> getMemberSessions(int userId) async {
+    final response = await dioClient.dio.get('/auth/org/members/$userId/sessions');
+    return (response.data as List)
+        .map((s) => MemberSessionSummary.fromJson(s))
+        .toList();
+  }
 }
