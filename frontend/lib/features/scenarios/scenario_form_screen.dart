@@ -27,6 +27,8 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
   int? _selectedScenarioContextId;
 
   List<Map<String, dynamic>> _objectives = [];
+  List<int> _objectiveKeys = [];
+  int _nextObjectiveKey = 0;
   bool _isLoading = true;
   bool _isSaving = false;
   String? _loadError;
@@ -48,11 +50,17 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
     super.initState();
     _titleController = TextEditingController();
     _promptController = TextEditingController();
+    _promptController.addListener(_onPromptChanged);
     _loadData();
+  }
+
+  void _onPromptChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    _promptController.removeListener(_onPromptChanged);
     _titleController.dispose();
     _promptController.dispose();
     super.dispose();
@@ -92,6 +100,10 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
                   'max_points': o.maxPoints,
                 })
             .toList();
+        _objectiveKeys = List.generate(
+          _objectives.length,
+          (_) => _nextObjectiveKey++,
+        );
       }
 
       setState(() {
@@ -112,12 +124,14 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
         'description': '',
         'max_points': 10,
       });
+      _objectiveKeys.add(_nextObjectiveKey++);
     });
   }
 
   void _removeObjective(int index) {
     setState(() {
       _objectives.removeAt(index);
+      _objectiveKeys.removeAt(index);
     });
   }
 
@@ -337,6 +351,7 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
                       childAspectRatio: 1.2,
                       children: _discOptions.map((opt) {
                         final isSelected = _selectedDiscType == opt['value'];
@@ -500,7 +515,8 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<int?>(
-                      initialValue: _selectedPersonalityTemplateId,
+                        isExpanded: true,
+                        initialValue: _selectedPersonalityTemplateId,
                         items: [
                           const DropdownMenuItem(
                             value: null,
@@ -511,6 +527,7 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
                                 value: t.id,
                                 child: Text(
                                   '${t.occupation} (${t.transactionType})',
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               )),
                         ],
@@ -556,6 +573,7 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<int?>(
+                        isExpanded: true,
                         initialValue: _selectedTraitSetId,
                         items: [
                           const DropdownMenuItem(
@@ -565,7 +583,9 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
                           ..._traitSets!.map((t) => DropdownMenuItem(
                                 value: t.id,
                                 child: Text(
-                                    'Set #${t.traitSetNumber}: ${t.trait1}, ${t.trait2}, ${t.trait3}'),
+                                  'Set #${t.traitSetNumber}: ${t.trait1}, ${t.trait2}, ${t.trait3}',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               )),
                         ],
                         onChanged: (value) {
@@ -610,7 +630,8 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<int?>(
-                      initialValue: _selectedScenarioContextId,
+                        isExpanded: true,
+                        initialValue: _selectedScenarioContextId,
                         items: [
                           const DropdownMenuItem(
                             value: null,
@@ -618,7 +639,10 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
                           ),
                           ..._scenarioContexts!.map((c) => DropdownMenuItem(
                                 value: c.id,
-                                child: Text(c.name),
+                                child: Text(
+                                  c.name,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               )),
                         ],
                         onChanged: (value) {
@@ -691,6 +715,7 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
                         itemBuilder: (context, index) {
                           final obj = _objectives[index];
                           return Padding(
+                            key: ValueKey(_objectiveKeys[index]),
                             padding: const EdgeInsets.only(bottom: 12),
                             child: Container(
                               decoration: BoxDecoration(
@@ -703,7 +728,9 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
                                   Row(
                                     children: [
                                       Expanded(
-                                        child: TextField(
+                                        child: TextFormField(
+                                          initialValue:
+                                              obj['label'] as String? ?? '',
                                           decoration: InputDecoration(
                                             labelText: 'Objective Label',
                                             border: OutlineInputBorder(
@@ -723,9 +750,12 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
                                       const SizedBox(width: 12),
                                       SizedBox(
                                         width: 80,
-                                        child: TextField(
+                                        child: TextFormField(
+                                          initialValue:
+                                              (obj['max_points'] as int? ?? 10)
+                                                  .toString(),
                                           decoration: InputDecoration(
-                                            labelText: 'Max Points',
+                                            labelText: 'Points',
                                             border: OutlineInputBorder(
                                               borderRadius:
                                                   BorderRadius.circular(4),
@@ -757,7 +787,9 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
                                     ],
                                   ),
                                   const SizedBox(height: 8),
-                                  TextField(
+                                  TextFormField(
+                                    initialValue:
+                                        obj['description'] as String? ?? '',
                                     decoration: InputDecoration(
                                       labelText: 'Description',
                                       hintText:
@@ -806,7 +838,8 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
 
   Widget _buildTemplatePreview() {
     final template = _personalityTemplates
-        ?.firstWhere((t) => t.id == _selectedPersonalityTemplateId);
+        ?.where((t) => t.id == _selectedPersonalityTemplateId)
+        .firstOrNull;
     if (template == null) return const SizedBox.shrink();
 
     return Padding(
@@ -909,7 +942,9 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
   }
 
   Widget _buildTraitSetPreview() {
-    final traitSet = _traitSets?.firstWhere((t) => t.id == _selectedTraitSetId);
+    final traitSet = _traitSets
+        ?.where((t) => t.id == _selectedTraitSetId)
+        .firstOrNull;
     if (traitSet == null) return const SizedBox.shrink();
 
     return Padding(
