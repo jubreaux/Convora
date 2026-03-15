@@ -24,6 +24,7 @@ class _TrainingSessionScreenState
   bool _voiceMode = false;
   bool _isStartingListening = false;
   int? _playingMessageId;
+  bool _objectivesExpanded = false;  // Track objectives panel expansion
 
   @override
   void initState() {
@@ -339,29 +340,9 @@ class _TrainingSessionScreenState
               ),
             ),
 
-          // Objectives banner
-          if (sessionState.objectivesCompleted.isNotEmpty)
-            Container(
-              color: Colors.green.shade50,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Objectives Completed:',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                  ...sessionState.objectivesCompleted.map(
-                    (obj) => Text(
-                      '✓ ${obj.objective.label}',
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          // Objectives Expandable Panel (NEW)
+          if (sessionState.maxScore > 0)
+            _buildObjectivesPanel(sessionState),
 
           // Live transcript during recording
           if (sessionState.isRecording &&
@@ -736,6 +717,186 @@ class _TrainingSessionScreenState
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ---- Objectives Expandable Panel ----
+  Widget _buildObjectivesPanel(ActiveSessionState sessionState) {
+    final completed = sessionState.objectivesCompleted.length;
+    final total = sessionState.maxScore > 0
+        ? sessionState.objectivesCompleted.length +
+            (sessionState.maxScore - sessionState.currentScore) ~/ 10
+        : 0;
+
+    return Container(
+      color: Colors.blue.shade50,
+      child: Column(
+        children: [
+          // Summary header (always visible)
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () =>
+                  setState(() => _objectivesExpanded = !_objectivesExpanded),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(
+                      _objectivesExpanded
+                          ? Icons.expand_less
+                          : Icons.expand_more,
+                      color: Colors.blue.shade700,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Objectives',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue.shade900,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '$completed / $total completed',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade200.withValues(
+                            alpha: 0.3),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '$completed/$total',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue.shade900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Expanded content
+          if (_objectivesExpanded && sessionState.objectivesCompleted.isNotEmpty)
+            Padding(
+              padding:
+                  const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: sessionState.objectivesCompleted.length,
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final obj =
+                          sessionState.objectivesCompleted[index];
+                      return Row(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.green,
+                            ),
+                            child: const Icon(
+                              Icons.check,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  obj.objective.label,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight:
+                                        FontWeight.w500,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                if (obj.notes != null &&
+                                    obj.notes!.isNotEmpty)
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets
+                                            .only(top: 4),
+                                    child: Text(
+                                      obj.notes!,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors
+                                            .grey.shade600,
+                                        fontStyle:
+                                            FontStyle.italic,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '+${obj.pointsAwarded}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          if (_objectivesExpanded &&
+              sessionState.objectivesCompleted.isEmpty)
+            Padding(
+              padding:
+                  const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Text(
+                'No objectives completed yet. Keep working to achieve them!',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.blue.shade700,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
