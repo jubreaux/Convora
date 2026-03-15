@@ -46,6 +46,17 @@ class DashboardScreen extends ConsumerWidget {
               ),
               PopupMenuItem(
                 child: const ListTile(
+                  leading: Icon(Icons.tune_rounded),
+                  title: Text('Manage Scenarios'),
+                  contentPadding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                ),
+                onTap: () {
+                  context.push('/manage-scenarios');
+                },
+              ),
+              PopupMenuItem(
+                child: const ListTile(
                   leading: Icon(Icons.dns_outlined),
                   title: Text('Change Server'),
                   contentPadding: EdgeInsets.zero,
@@ -139,6 +150,58 @@ class DashboardScreen extends ConsumerWidget {
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Manage Scenarios Tile
+              InkWell(
+                onTap: () => context.push('/manage-scenarios'),
+                child: Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.tune_rounded,
+                              color: Colors.purple.shade600,
+                              size: 28,
+                            ),
+                            const SizedBox(width: 16),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Manage Scenarios',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                                Text(
+                                  'Create and customize scenarios',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: Colors.grey.shade600,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: Colors.grey.shade400,
+                        ),
+                      ],
                     ),
                   ),
                 ),

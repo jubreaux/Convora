@@ -214,6 +214,35 @@ class ConvoraApiClient {
     return ScenarioList.fromJson(response.data);
   }
 
+  /// Delete a scenario
+  Future<void> deleteScenario(int scenarioId) async {
+    await dioClient.dio.delete('/scenarios/$scenarioId');
+  }
+
+  /// Get all personality templates (for scenario creation/editing forms)
+  Future<List<PersonalityTemplate>> getPersonalityTemplates() async {
+    final response = await dioClient.dio.get('/metadata/personality-templates');
+    return (response.data as List)
+        .map((t) => PersonalityTemplate.fromJson(t))
+        .toList();
+  }
+
+  /// Get all trait sets (for scenario creation/editing forms)
+  Future<List<TraitSet>> getTraitSets() async {
+    final response = await dioClient.dio.get('/metadata/trait-sets');
+    return (response.data as List)
+        .map((t) => TraitSet.fromJson(t))
+        .toList();
+  }
+
+  /// Get all scenario contexts (for scenario creation/editing forms)
+  Future<List<ScenarioContext>> getScenarioContexts() async {
+    final response = await dioClient.dio.get('/metadata/scenario-contexts');
+    return (response.data as List)
+        .map((c) => ScenarioContext.fromJson(c))
+        .toList();
+  }
+
   // ===== Sessions =====
   Future<Map<String, dynamic>> createSession(int scenarioId) async {
     final response = await dioClient.dio.post(

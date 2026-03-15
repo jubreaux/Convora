@@ -125,6 +125,23 @@ class TraitSet {
   }
 }
 
+class ScenarioContext {
+  final int id;
+  final String name;
+
+  ScenarioContext({
+    required this.id,
+    required this.name,
+  });
+
+  factory ScenarioContext.fromJson(Map<String, dynamic> json) {
+    return ScenarioContext(
+      id: json['id'] as int,
+      name: json['name'] as String,
+    );
+  }
+}
+
 class Objective {
   final int id;
   final String label;
@@ -185,6 +202,9 @@ class ScenarioDetail {
   final String visibility;
   final DateTime createdAt;
   final List<Objective> objectives;
+  final int? personalityTemplateId;
+  final int? traitSetId;
+  final int? scenarioContextId;
 
   ScenarioDetail({
     required this.id,
@@ -194,6 +214,9 @@ class ScenarioDetail {
     required this.visibility,
     required this.createdAt,
     required this.objectives,
+    this.personalityTemplateId,
+    this.traitSetId,
+    this.scenarioContextId,
   });
 
   factory ScenarioDetail.fromJson(Map<String, dynamic> json) {
@@ -207,6 +230,9 @@ class ScenarioDetail {
       objectives: (json['objectives'] as List? ?? [])
           .map((e) => Objective.fromJson(e as Map<String, dynamic>))
           .toList(),
+      personalityTemplateId: json['personality_template_id'] as int?,
+      traitSetId: json['trait_set_id'] as int?,
+      scenarioContextId: json['scenario_context_id'] as int?,
     );
   }
 }

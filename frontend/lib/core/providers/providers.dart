@@ -316,6 +316,40 @@ final userStatsProvider = FutureProvider<UserStats>((ref) async {
   return await apiClient.getUserStats();
 });
 
+// ===== Metadata Providers (for scenario creation/editing forms) =====
+final personalityTemplatesProvider = FutureProvider<List<PersonalityTemplate>>((ref) async {
+  final authState = ref.watch(authProvider);
+  
+  if (!authState.isAuthenticated) {
+    throw Exception('Not authenticated');
+  }
+  
+  final apiClient = ref.watch(apiClientProvider);
+  return await apiClient.getPersonalityTemplates();
+});
+
+final traitSetsProvider = FutureProvider<List<TraitSet>>((ref) async {
+  final authState = ref.watch(authProvider);
+  
+  if (!authState.isAuthenticated) {
+    throw Exception('Not authenticated');
+  }
+  
+  final apiClient = ref.watch(apiClientProvider);
+  return await apiClient.getTraitSets();
+});
+
+final scenarioContextsProvider = FutureProvider<List<ScenarioContext>>((ref) async {
+  final authState = ref.watch(authProvider);
+  
+  if (!authState.isAuthenticated) {
+    throw Exception('Not authenticated');
+  }
+  
+  final apiClient = ref.watch(apiClientProvider);
+  return await apiClient.getScenarioContexts();
+});
+
 // ===== Active Session State =====
 class ActiveSessionState {
   final int? sessionId;

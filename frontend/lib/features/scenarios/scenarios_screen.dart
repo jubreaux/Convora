@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:convora/core/providers/providers.dart';
-import 'create_scenario_sheet.dart';
 import 'edit_scenario_sheet.dart';
 
 class ScenariosScreen extends ConsumerWidget {
@@ -178,15 +177,7 @@ class ScenariosScreen extends ConsumerWidget {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          builder: (context) => const CreateScenarioSheet(),
-        ),
-        backgroundColor: Colors.teal,
-        child: const Icon(Icons.add),
-      ),
+
     );
   }
 

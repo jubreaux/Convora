@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:convora/core/theme/app_theme.dart';
 import 'package:convora/core/providers/providers.dart';
+import 'package:convora/core/models/models.dart';
 import 'package:convora/features/auth/auth_screen.dart';
 import 'package:convora/features/dashboard/dashboard_screen.dart';
 import 'package:convora/features/scenarios/scenarios_screen.dart';
+import 'package:convora/features/scenarios/manage_scenarios_screen.dart';
+import 'package:convora/features/scenarios/scenario_form_screen.dart';
 import 'package:convora/features/history/history_screen.dart';
 import 'package:convora/features/training/training_screen.dart';
 import 'package:convora/features/feedback/feedback_screen.dart';
@@ -73,6 +76,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/manage-scenarios',
+        builder: (context, state) => const ManageScenariosScreen(),
+      ),
+      GoRoute(
+        path: '/scenario-form',
+        builder: (context, state) => ScenarioFormScreen(
+          scenario: state.extra as ScenarioDetail?,
+        ),
       ),
     ],
   );
