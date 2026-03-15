@@ -296,6 +296,10 @@ class _TrainingSessionScreenState
       ),
       body: Column(
         children: [
+          // Objectives Panel - Show ONLY on load before messages appear
+          if (sessionState.maxScore > 0 && sessionState.messages.isEmpty)
+            _buildObjectivesPanel(sessionState),
+
           // Messages list
           Expanded(
             child: sessionState.messages.isEmpty
@@ -339,10 +343,6 @@ class _TrainingSessionScreenState
                 ],
               ),
             ),
-
-          // Objectives Expandable Panel (NEW)
-          if (sessionState.maxScore > 0)
-            _buildObjectivesPanel(sessionState),
 
           // Live transcript during recording
           if (sessionState.isRecording &&
