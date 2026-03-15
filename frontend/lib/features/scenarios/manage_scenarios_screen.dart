@@ -190,7 +190,7 @@ class ManageScenariosScreen extends ConsumerWidget {
                           const SizedBox(width: 8),
                           IconButton(
                             onPressed: () =>
-                                context.push('/scenario-form', extra: scenario),
+                                context.push('/scenario-form/${scenario.id}'),
                             icon: const Icon(Icons.edit_outlined),
                             iconSize: 20,
                             padding: EdgeInsets.zero,

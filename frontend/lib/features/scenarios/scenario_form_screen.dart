@@ -5,11 +5,11 @@ import 'package:convora/core/providers/providers.dart';
 import 'package:convora/core/models/models.dart';
 
 class ScenarioFormScreen extends ConsumerStatefulWidget {
-  final ScenarioDetail? scenario;  // null = create, non-null = edit
+  final int? scenarioId;  // null = create, non-null = edit with this ID
 
   const ScenarioFormScreen({
     super.key,
-    this.scenario,
+    this.scenarioId,
   });
 
   @override
@@ -82,8 +82,8 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
       _scenarioContexts = contexts as List<ScenarioContext>;
 
       // If editing, load the full scenario detail
-      if (widget.scenario != null) {
-        _fullScenario = await apiClient.getScenarioDetail(widget.scenario!.id);
+      if (widget.scenarioId != null) {
+        _fullScenario = await apiClient.getScenarioDetail(widget.scenarioId!);
 
         _titleController.text = _fullScenario!.title;
         _promptController.text = _fullScenario!.aiSystemPrompt;
@@ -185,10 +185,10 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
               })
           .toList();
 
-      if (widget.scenario != null) {
+      if (widget.scenarioId != null) {
         // Edit mode
         await apiClient.updateScenario(
-          scenarioId: widget.scenario!.id,
+          scenarioId: widget.scenarioId!,
           title: _titleController.text.trim(),
           discType: _selectedDiscType,
           aiSystemPrompt: _promptController.text.trim(),
@@ -220,7 +220,7 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              widget.scenario != null
+              widget.scenarioId != null
                   ? 'Scenario updated successfully!'
                   : 'Scenario created successfully!',
             ),
@@ -242,7 +242,7 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: Text(widget.scenario != null ? 'Edit Scenario' : 'Create Scenario'),
+          title: Text(widget.scenarioId != null ? 'Edit Scenario' : 'Create Scenario'),
         ),
         body: const Center(child: CircularProgressIndicator()),
       );
@@ -251,7 +251,7 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
     if (_loadError != null) {
       return Scaffold(
         appBar: AppBar(
-          title: Text(widget.scenario != null ? 'Edit Scenario' : 'Create Scenario'),
+          title: Text(widget.scenarioId != null ? 'Edit Scenario' : 'Create Scenario'),
         ),
         body: Center(
           child: Column(
@@ -276,7 +276,7 @@ class _ScenarioFormScreenState extends ConsumerState<ScenarioFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.scenario != null ? 'Edit Scenario' : 'Create Scenario'),
+        title: Text(widget.scenarioId != null ? 'Edit Scenario' : 'Create Scenario'),
         leading: BackButton(onPressed: () => context.go('/manage-scenarios')),
         actions: [
           Padding(

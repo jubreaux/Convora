@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:convora/core/theme/app_theme.dart';
 import 'package:convora/core/providers/providers.dart';
-import 'package:convora/core/models/models.dart';
 import 'package:convora/features/auth/auth_screen.dart';
 import 'package:convora/features/dashboard/dashboard_screen.dart';
 import 'package:convora/features/scenarios/scenarios_screen.dart';
@@ -83,9 +82,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/scenario-form',
-        builder: (context, state) => ScenarioFormScreen(
-          scenario: state.extra as ScenarioDetail?,
-        ),
+        builder: (context, state) => const ScenarioFormScreen(),
+      ),
+      GoRoute(
+        path: '/scenario-form/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'];
+          return ScenarioFormScreen(scenarioId: id != null ? int.parse(id) : null);
+        },
       ),
     ],
   );
