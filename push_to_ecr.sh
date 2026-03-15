@@ -232,6 +232,20 @@ upload_admin_to_s3() {
     --exclude "downloads/*"; then
     log_info "Admin web app uploaded to S3 successfully ✅"
     log_info "URL: https://${S3_ADMIN_PATH}.${S3_BUCKET_NAME}/"
+
+    # Invalidate CloudFront cache so new files are served immediately
+    local cf_dist="E2N031064FD3ZI"
+    log_info "Invalidating CloudFront cache for distribution ${cf_dist}..."
+    if aws --no-cli-pager cloudfront create-invalidation \
+        --distribution-id "${cf_dist}" \
+        --paths "/*" \
+        --query 'Invalidation.{Id:Id,Status:Status}' \
+        --output text 2>&1; then
+      log_info "CloudFront cache invalidated ✅"
+    else
+      log_warn "CloudFront invalidation failed — you may need to invalidate manually"
+    fi
+
     return 0
   else
     log_error "Failed to upload admin web app to S3"
