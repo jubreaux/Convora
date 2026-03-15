@@ -29,7 +29,21 @@ const Layout: React.FC<LayoutProps> = ({ children, user }) => {
     try {
       // Fetch as blob to bypass browser cache and force a real download
       const res = await fetch(APK_URL, { cache: 'no-store' });
+      if (!res.ok) {
+        console.error(`APK download failed: ${res.status} ${res.statusText}`);
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+      
+      const contentType = res.headers.get('content-type');
+      console.log(`APK content-type: ${contentType}, size: ${res.headers.get('content-length')} bytes`);
+      
       const blob = await res.blob();
+      console.log(`Downloaded blob size: ${blob.size} bytes`);
+      
+      if (blob.size === 0) {
+        throw new Error('Downloaded file is empty');
+      }
+      
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -38,7 +52,10 @@ const Layout: React.FC<LayoutProps> = ({ children, user }) => {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-    } catch {
+      console.log('APK download started successfully');
+    } catch (err) {
+      console.error('APK download error:', err);
+      alert(`Download failed: ${err instanceof Error ? err.message : 'Unknown error'}\n\nTrying direct download...`);
       // Fallback: direct link
       window.location.href = APK_URL;
     } finally {
