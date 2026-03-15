@@ -45,19 +45,21 @@ class MemberSessionsScreen extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline, size: 48, color: Colors.red),
               const SizedBox(height: 16),
-              Text('Failed to load sessions',
-                  style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'Failed to load sessions',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 8),
-              Text(error.toString(),
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.grey.shade600),
-                  textAlign: TextAlign.center),
+              Text(
+                error.toString(),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
-                onPressed: () =>
-                    ref.refresh(memberSessionsProvider(userId)),
+                onPressed: () => ref.refresh(memberSessionsProvider(userId)),
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
               ),
@@ -70,17 +72,26 @@ class MemberSessionsScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.history_rounded,
-                      size: 64, color: Colors.grey.shade400),
+                  Icon(
+                    Icons.history_rounded,
+                    size: 64,
+                    color: Colors.grey.shade400,
+                  ),
                   const SizedBox(height: 16),
-                  Text('No sessions yet',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.grey.shade600)),
+                  Text(
+                    'No sessions yet',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text('This member has not completed any training sessions.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey.shade500),
-                      textAlign: TextAlign.center),
+                  Text(
+                    'This member has not completed any training sessions.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ],
               ),
             );
@@ -95,8 +106,9 @@ class MemberSessionsScreen extends ConsumerWidget {
           final avgScore = sorted.isEmpty
               ? 0.0
               : sorted.fold(0, (sum, s) => sum + s.score) / sorted.length;
-          final bestScore =
-              sorted.isEmpty ? 0 : sorted.map((s) => s.score).reduce((a, b) => a > b ? a : b);
+          final bestScore = sorted.isEmpty
+              ? 0
+              : sorted.map((s) => s.score).reduce((a, b) => a > b ? a : b);
 
           return Column(
             children: [
@@ -169,8 +181,8 @@ class _SessionCard extends StatelessWidget {
     final scoreColor = session.score >= 80
         ? Colors.green
         : session.score >= 60
-            ? Colors.orange
-            : Colors.red;
+        ? Colors.orange
+        : Colors.red;
 
     return Card(
       elevation: 1,
@@ -247,20 +259,25 @@ class _SessionCard extends StatelessWidget {
                     Text(
                       _formatDate(session.startedAt),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey.shade600),
+                        color: Colors.grey.shade600,
+                      ),
                     ),
                     if (session.endedAt != null)
                       Text(
                         'Duration: ${_formatDuration(session.startedAt, session.endedAt!)}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey.shade500),
+                          color: Colors.grey.shade500,
+                        ),
                       ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(Icons.arrow_forward_ios,
-                  size: 16, color: Colors.grey.shade400),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: Colors.grey.shade400,
+              ),
             ],
           ),
         ),
@@ -326,27 +343,32 @@ class _SummaryChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2)),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
         children: [
           Icon(icon, color: color, size: 22),
           const SizedBox(height: 6),
-          Text(value,
-              style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18)),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(label,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Colors.grey.shade600),
-              textAlign: TextAlign.center),
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:convora/core/api/convora_api.dart';
 import 'package:convora/core/config/app_config.dart';
@@ -14,13 +15,9 @@ class ServerConfigNotifier extends StateNotifier<String> {
     _loadSaved();
   }
 
-  /// Platform-aware default URL.
+  /// Default URL — points to production. Can be overridden in-app for local dev.
   static String _defaultUrl() {
-    if (kIsWeb) return 'http://localhost:8400/api';
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8400/api';
-    }
-    return 'http://localhost:8400/api';
+    return 'https://api.convora.customertest.digitalbullet.net/api';
   }
 
   Future<void> _loadSaved() async {
@@ -42,8 +39,8 @@ class ServerConfigNotifier extends StateNotifier<String> {
 
 final serverConfigProvider =
     StateNotifierProvider<ServerConfigNotifier, String>(
-  (ref) => ServerConfigNotifier(),
-);
+      (ref) => ServerConfigNotifier(),
+    );
 
 // ===== Dio Client Provider =====
 final dioClientProvider = Provider<DioClient>((ref) {
@@ -158,23 +155,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
               'Connection error. Check server URL and network connectivity.';
         }
       }
-      state = state.copyWith(
-        isLoading: false,
-        error: errorMsg,
-      );
+      state = state.copyWith(isLoading: false, error: errorMsg);
     }
   }
 
-  Future<void> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> login({required String email, required String password}) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final response = await apiClient.login(
-        email: email,
-        password: password,
-      );
+      final response = await apiClient.login(email: email, password: password);
       state = state.copyWith(
         user: response.user,
         isAuthenticated: true,
@@ -198,10 +186,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
               'Connection error. Check server URL and network connectivity.';
         }
       }
-      state = state.copyWith(
-        isLoading: false,
-        error: errorMsg,
-      );
+      state = state.copyWith(isLoading: false, error: errorMsg);
     }
   }
 
@@ -225,10 +210,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         updateVoice: updateVoice,
         voicePreference: voicePreference,
       );
-      state = state.copyWith(
-        user: updatedUser,
-        isLoading: false,
-      );
+      state = state.copyWith(user: updatedUser, isLoading: false);
     } catch (e) {
       String errorMsg = e.toString();
       if (e is DioException) {
@@ -238,10 +220,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           errorMsg = 'Connection error. Check network connectivity.';
         }
       }
-      state = state.copyWith(
-        isLoading: false,
-        error: errorMsg,
-      );
+      state = state.copyWith(isLoading: false, error: errorMsg);
     }
   }
 }
@@ -256,14 +235,14 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
 final scenariosProvider = FutureProvider<List<ScenarioList>>((ref) async {
   // Wait for auth to be ready before fetching scenarios
   final authState = ref.watch(authProvider);
-  
+
   if (!authState.isAuthenticated) {
     throw Exception('Not authenticated');
   }
-  
+
   // Add a small delay to ensure token is persisted
   await Future.delayed(const Duration(milliseconds: 100));
-  
+
   final apiClient = ref.watch(apiClientProvider);
   return await apiClient.getScenarios();
 });
@@ -272,84 +251,90 @@ final scenariosProvider = FutureProvider<List<ScenarioList>>((ref) async {
 final randomScenarioProvider = FutureProvider<ScenarioList>((ref) async {
   // Wait for auth to be ready before fetching
   final authState = ref.watch(authProvider);
-  
+
   if (!authState.isAuthenticated) {
     throw Exception('Not authenticated');
   }
-  
+
   // Add a small delay to ensure token is persisted
   await Future.delayed(const Duration(milliseconds: 100));
-  
+
   final apiClient = ref.watch(apiClientProvider);
   return await apiClient.getRandomScenario();
 });
 
 // ===== Session History Provider (waits for auth) =====
-final sessionHistoryProvider =
-    FutureProvider<List<SessionHistory>>((ref) async {
+final sessionHistoryProvider = FutureProvider<List<SessionHistory>>((
+  ref,
+) async {
   // Wait for auth to be ready before fetching
   final authState = ref.watch(authProvider);
-  
+
   if (!authState.isAuthenticated) {
     throw Exception('Not authenticated');
   }
-  
+
   // Add a small delay to ensure token is persisted
   await Future.delayed(const Duration(milliseconds: 100));
-  
+
   final apiClient = ref.watch(apiClientProvider);
   return await apiClient.getUserHistory();
 });
 
 // ===== Session Review Provider =====
-final sessionReviewProvider =
-    FutureProvider.family<SessionReviewResponse, int>((ref, sessionId) async {
-  final apiClient = ref.watch(apiClientProvider);
-  return await apiClient.getSessionReview(sessionId);
-});
+final sessionReviewProvider = FutureProvider.family<SessionReviewResponse, int>(
+  (ref, sessionId) async {
+    final apiClient = ref.watch(apiClientProvider);
+    return await apiClient.getSessionReview(sessionId);
+  },
+);
 
 // ===== User Stats Provider =====
 final userStatsProvider = FutureProvider<UserStats>((ref) async {
   final authState = ref.watch(authProvider);
-  
+
   if (!authState.isAuthenticated) {
     throw Exception('Not authenticated');
   }
-  
+
   final apiClient = ref.watch(apiClientProvider);
   return await apiClient.getUserStats();
 });
 
 // ===== Metadata Providers (for scenario creation/editing forms) =====
-final personalityTemplatesProvider = FutureProvider<List<PersonalityTemplate>>((ref) async {
+final personalityTemplatesProvider = FutureProvider<List<PersonalityTemplate>>((
+  ref,
+) async {
   final authState = ref.watch(authProvider);
-  
+
   if (!authState.isAuthenticated) {
     throw Exception('Not authenticated');
   }
-  
+
   final apiClient = ref.watch(apiClientProvider);
   return await apiClient.getPersonalityTemplates();
 });
 
 final traitSetsProvider = FutureProvider<List<TraitSet>>((ref) async {
   final authState = ref.watch(authProvider);
-  
+
   if (!authState.isAuthenticated) {
     throw Exception('Not authenticated');
   }
-  
+
   final apiClient = ref.watch(apiClientProvider);
   return await apiClient.getTraitSets();
 });
 
-final scenarioContextsProvider = FutureProvider<List<ScenarioContext>>((ref) async {
+final scenarioContextsProvider = FutureProvider<List<ScenarioContext>>((
+  ref,
+) async {
   final authState = ref.watch(authProvider);
-  
+
   if (!authState.isAuthenticated) {
     throw Exception('Not authenticated');
   }
-  
+
   final apiClient = ref.watch(apiClientProvider);
   return await apiClient.getScenarioContexts();
 });
@@ -378,25 +363,29 @@ final orgTeamsProvider = FutureProvider<List<TeamStats>>((ref) async {
   return await apiClient.getOrgTeams();
 });
 
-final teamMembersProvider = FutureProvider.family<List<TeamMemberDetail>, int>((ref, teamId) async {
+final teamMembersProvider = FutureProvider.family<List<TeamMemberDetail>, int>((
+  ref,
+  teamId,
+) async {
   final authState = ref.watch(authProvider);
   if (!authState.isAuthenticated) throw Exception('Not authenticated');
   final apiClient = ref.watch(apiClientProvider);
   return await apiClient.getTeamMembers(teamId);
 });
 
-final memberSessionsProvider = FutureProvider.family<List<MemberSessionSummary>, int>((ref, userId) async {
-  final authState = ref.watch(authProvider);
-  if (!authState.isAuthenticated) throw Exception('Not authenticated');
-  final apiClient = ref.watch(apiClientProvider);
-  return await apiClient.getMemberSessions(userId);
-});
+final memberSessionsProvider =
+    FutureProvider.family<List<MemberSessionSummary>, int>((ref, userId) async {
+      final authState = ref.watch(authProvider);
+      if (!authState.isAuthenticated) throw Exception('Not authenticated');
+      final apiClient = ref.watch(apiClientProvider);
+      return await apiClient.getMemberSessions(userId);
+    });
 
 // ===== Active Session State =====
 class ActiveSessionState {
   final int? sessionId;
   final int? scenarioId;
-  final String scenarioTitle;  // NEW: Store the scenario title for display
+  final String scenarioTitle; // NEW: Store the scenario title for display
   final List<SessionMessage> messages;
   final int currentScore;
   final int maxScore;
@@ -406,14 +395,14 @@ class ActiveSessionState {
   final bool isEnded;
   final bool isLoading;
   final String? error;
-  final bool isRecording;        // Mic is actively recording
-  final bool isSpeaking;         // Audio is playing back
-  final String liveTranscript;   // Partial transcript while recording
+  final bool isRecording; // Mic is actively recording
+  final bool isSpeaking; // Audio is playing back
+  final String liveTranscript; // Partial transcript while recording
 
   const ActiveSessionState({
     this.sessionId,
     this.scenarioId,
-    this.scenarioTitle = '',  // NEW: Default empty
+    this.scenarioTitle = '', // NEW: Default empty
     this.messages = const [],
     this.currentScore = 0,
     this.maxScore = 0,
@@ -431,7 +420,7 @@ class ActiveSessionState {
   ActiveSessionState copyWith({
     int? sessionId,
     int? scenarioId,
-    String? scenarioTitle,  // NEW
+    String? scenarioTitle, // NEW
     List<SessionMessage>? messages,
     int? currentScore,
     int? maxScore,
@@ -448,7 +437,7 @@ class ActiveSessionState {
     return ActiveSessionState(
       sessionId: sessionId ?? this.sessionId,
       scenarioId: scenarioId ?? this.scenarioId,
-      scenarioTitle: scenarioTitle ?? this.scenarioTitle,  // NEW
+      scenarioTitle: scenarioTitle ?? this.scenarioTitle, // NEW
       messages: messages ?? this.messages,
       currentScore: currentScore ?? this.currentScore,
       maxScore: maxScore ?? this.maxScore,
@@ -490,22 +479,19 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
       state = state.copyWith(
         sessionId: sessionId,
         scenarioId: scenarioId,
-        scenarioTitle: scenarioTitle,  // NEW: Store the title
+        scenarioTitle: scenarioTitle, // NEW: Store the title
         messages: [
           SessionMessage(
             id: 0,
             role: 'assistant',
             content: message,
             createdAt: DateTime.now(),
-          )
+          ),
         ],
         isLoading: false,
       );
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
@@ -575,7 +561,7 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
 
       state = state.copyWith(
         messages: [...state.messages, userMsg],
-        liveTranscript: '',  // Clear transcript after sending
+        liveTranscript: '', // Clear transcript after sending
       );
 
       // Get response from server
@@ -607,10 +593,7 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
         await _playAudio(response.audioBase64!);
       }
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
@@ -643,6 +626,6 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
 // ===== Active Session Provider =====
 final activeSessionProvider =
     StateNotifierProvider<ActiveSessionNotifier, ActiveSessionState>((ref) {
-  final apiClient = ref.watch(apiClientProvider);
-  return ActiveSessionNotifier(apiClient);
-});
+      final apiClient = ref.watch(apiClientProvider);
+      return ActiveSessionNotifier(apiClient);
+    });

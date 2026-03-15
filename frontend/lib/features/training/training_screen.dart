@@ -14,8 +14,7 @@ class TrainingSessionScreen extends ConsumerStatefulWidget {
       _TrainingSessionScreenState();
 }
 
-class _TrainingSessionScreenState
-    extends ConsumerState<TrainingSessionScreen> {
+class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
   late TextEditingController _messageController;
   late stt.SpeechToText _speechToText;
   late ScrollController _scrollController;
@@ -24,7 +23,7 @@ class _TrainingSessionScreenState
   bool _voiceMode = false;
   bool _isStartingListening = false;
   int? _playingMessageId;
-  bool _objectivesExpanded = false;  // Track objectives panel expansion
+  bool _objectivesExpanded = false; // Track objectives panel expansion
 
   @override
   void initState() {
@@ -95,7 +94,9 @@ class _TrainingSessionScreenState
       _speechToText.listen(
         onResult: (result) {
           // Update live transcript as user speaks
-          ref.read(activeSessionProvider.notifier).updateTranscript(result.recognizedWords);
+          ref
+              .read(activeSessionProvider.notifier)
+              .updateTranscript(result.recognizedWords);
 
           // Auto-send when speech recognition is final (complete)
           if (result.finalResult && result.recognizedWords.isNotEmpty) {
@@ -160,7 +161,9 @@ class _TrainingSessionScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('No active session. Please start a training session first.'),
+            content: Text(
+              'No active session. Please start a training session first.',
+            ),
             backgroundColor: Colors.orange,
           ),
         );
@@ -268,7 +271,10 @@ class _TrainingSessionScreenState
                   const Text(
                     'Score',
                     style: TextStyle(
-                        fontSize: 9, color: Colors.white70, height: 1.0),
+                      fontSize: 9,
+                      color: Colors.white70,
+                      height: 1.0,
+                    ),
                   ),
                   Text(
                     '${sessionState.currentScore}/${sessionState.maxScore}',
@@ -304,8 +310,7 @@ class _TrainingSessionScreenState
             child: sessionState.messages.isEmpty
                 ? const Center(
                     child: CircularProgressIndicator(
-                      valueColor:
-                          AlwaysStoppedAnimation(Color(0xFF1F7A7E)),
+                      valueColor: AlwaysStoppedAnimation(Color(0xFF1F7A7E)),
                     ),
                   )
                 : ListView.builder(
@@ -314,10 +319,13 @@ class _TrainingSessionScreenState
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     itemCount: sessionState.messages.length,
                     itemBuilder: (context, index) {
-                      final message = sessionState.messages[
-                          sessionState.messages.length - 1 - index];
+                      final message = sessionState
+                          .messages[sessionState.messages.length - 1 - index];
                       return _buildMessageBubble(
-                          context, message, sessionState);
+                        context,
+                        message,
+                        sessionState,
+                      );
                     },
                   ),
           ),
@@ -326,8 +334,7 @@ class _TrainingSessionScreenState
           if (sessionState.appointmentSet)
             Container(
               color: Colors.amber.shade50,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: const Row(
                 children: [
                   Icon(Icons.schedule, color: Colors.orange, size: 18),
@@ -336,7 +343,9 @@ class _TrainingSessionScreenState
                     child: Text(
                       'Appointment scheduled — discuss details in this session!',
                       style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w500),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
@@ -348,8 +357,7 @@ class _TrainingSessionScreenState
               sessionState.liveTranscript.isNotEmpty)
             Container(
               color: Colors.red.shade50,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 children: [
                   const Icon(Icons.mic, color: Colors.red, size: 16),
@@ -398,15 +406,15 @@ class _TrainingSessionScreenState
     ActiveSessionState sessionState,
   ) {
     final isUser = message.role == 'user';
-    final isBlocked = sessionState.isLoading ||
+    final isBlocked =
+        sessionState.isLoading ||
         sessionState.isSpeaking ||
         sessionState.isRecording;
     final isThisPlaying = _playingMessageId == message.id;
 
     if (isUser) {
       return Padding(
-        padding:
-            const EdgeInsets.only(left: 56, right: 12, top: 3, bottom: 3),
+        padding: const EdgeInsets.only(left: 56, right: 12, top: 3, bottom: 3),
         child: Align(
           alignment: Alignment.centerRight,
           child: Container(
@@ -423,7 +431,10 @@ class _TrainingSessionScreenState
             child: Text(
               message.content,
               style: const TextStyle(
-                  color: Colors.white, fontSize: 15, height: 1.4),
+                color: Colors.white,
+                fontSize: 15,
+                height: 1.4,
+              ),
             ),
           ),
         ),
@@ -432,8 +443,7 @@ class _TrainingSessionScreenState
 
     // AI message
     return Padding(
-      padding:
-          const EdgeInsets.only(left: 8, right: 56, top: 3, bottom: 3),
+      padding: const EdgeInsets.only(left: 8, right: 56, top: 3, bottom: 3),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -506,14 +516,14 @@ class _TrainingSessionScreenState
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation(
-                                      Color(0xFF1F7A7E)),
+                                    Color(0xFF1F7A7E),
+                                  ),
                                 ),
                               )
                             : Icon(
                                 Icons.volume_up_outlined,
                                 size: 18,
-                                color: (isBlocked ||
-                                        _playingMessageId != null)
+                                color: (isBlocked || _playingMessageId != null)
                                     ? Colors.grey[300]
                                     : const Color(0xFF4DB6AC),
                               ),
@@ -546,8 +556,10 @@ class _TrainingSessionScreenState
       leading = Container(
         width: 7,
         height: 7,
-        decoration:
-            const BoxDecoration(shape: BoxShape.circle, color: Colors.red),
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.red,
+        ),
       );
     } else if (sessionState.isSpeaking) {
       label = 'Speaking...';
@@ -576,8 +588,7 @@ class _TrainingSessionScreenState
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Center(
         child: Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
           decoration: BoxDecoration(
             color: bgColor,
             borderRadius: BorderRadius.circular(20),
@@ -607,11 +618,9 @@ class _TrainingSessionScreenState
   }
 
   // ---- Input bar ----
-  Widget _buildInputBar(
-      BuildContext context, ActiveSessionState sessionState) {
+  Widget _buildInputBar(BuildContext context, ActiveSessionState sessionState) {
     final isProcessing = sessionState.isLoading || sessionState.isSpeaking;
-    final canSend =
-        _hasText && !isProcessing && !sessionState.isRecording;
+    final canSend = _hasText && !isProcessing && !sessionState.isRecording;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
@@ -634,8 +643,8 @@ class _TrainingSessionScreenState
               onTap: isProcessing
                   ? null
                   : (sessionState.isRecording
-                      ? _stopListeningAndSend
-                      : _startListening),
+                        ? _stopListeningAndSend
+                        : _startListening),
               child: Container(
                 width: 40,
                 height: 40,
@@ -645,8 +654,8 @@ class _TrainingSessionScreenState
                   color: sessionState.isRecording
                       ? Colors.red
                       : (isProcessing
-                          ? Colors.grey.shade300
-                          : const Color(0xFF1F7A7E)),
+                            ? Colors.grey.shade300
+                            : const Color(0xFF1F7A7E)),
                 ),
                 child: Icon(
                   sessionState.isRecording ? Icons.mic : Icons.mic_none,
@@ -659,20 +668,20 @@ class _TrainingSessionScreenState
             Expanded(
               child: TextField(
                 controller: _messageController,
-                enabled:
-                    !sessionState.isRecording && !sessionState.isSpeaking,
+                enabled: !sessionState.isRecording && !sessionState.isSpeaking,
                 textInputAction: TextInputAction.send,
                 decoration: InputDecoration(
                   hintText: sessionState.isRecording
                       ? 'Recording...'
                       : (sessionState.isSpeaking
-                          ? 'Playing...'
-                          : 'Type your response...'),
-                  hintStyle:
-                      TextStyle(color: Colors.grey[400], fontSize: 14),
+                            ? 'Playing...'
+                            : 'Type your response...'),
+                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 12),
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                 ),
                 onSubmitted: (_) => canSend ? _sendMessage() : null,
               ),
@@ -698,18 +707,14 @@ class _TrainingSessionScreenState
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
                             valueColor: AlwaysStoppedAnimation(
-                              canSend
-                                  ? Colors.white
-                                  : Colors.grey.shade400,
+                              canSend ? Colors.white : Colors.grey.shade400,
                             ),
                           ),
                         ),
                       )
                     : Icon(
                         Icons.send_rounded,
-                        color: canSend
-                            ? Colors.white
-                            : Colors.grey.shade400,
+                        color: canSend ? Colors.white : Colors.grey.shade400,
                         size: 20,
                       ),
               ),
@@ -723,7 +728,9 @@ class _TrainingSessionScreenState
   // ---- Objectives Expandable Panel ----
   Widget _buildObjectivesPanel(ActiveSessionState sessionState) {
     final completed = sessionState.objectivesCompleted.length;
-    final totalRemaining = sessionState.maxScore > 0 ? ((sessionState.maxScore - sessionState.currentScore) ~/ 10) : 0;
+    final totalRemaining = sessionState.maxScore > 0
+        ? ((sessionState.maxScore - sessionState.currentScore) ~/ 10)
+        : 0;
     final total = completed + totalRemaining;
 
     return Container(
@@ -738,7 +745,9 @@ class _TrainingSessionScreenState
                   setState(() => _objectivesExpanded = !_objectivesExpanded),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 12),
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Row(
                   children: [
                     Icon(
@@ -767,17 +776,18 @@ class _TrainingSessionScreenState
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.blue.shade700,
-                              ),
                             ),
+                          ),
                         ],
                       ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: Colors.blue.shade200.withValues(
-                            alpha: 0.3),
+                        color: Colors.blue.shade200.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -795,10 +805,10 @@ class _TrainingSessionScreenState
             ),
           ),
           // Expanded content
-          if (_objectivesExpanded && sessionState.objectivesCompleted.isNotEmpty)
+          if (_objectivesExpanded &&
+              sessionState.objectivesCompleted.isNotEmpty)
             Padding(
-              padding:
-                  const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -806,14 +816,11 @@ class _TrainingSessionScreenState
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: sessionState.objectivesCompleted.length,
-                    separatorBuilder: (_, __) =>
-                        const SizedBox(height: 8),
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (context, index) {
-                      final obj =
-                          sessionState.objectivesCompleted[index];
+                      final obj = sessionState.objectivesCompleted[index];
                       return Row(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
                             width: 20,
@@ -831,32 +838,25 @@ class _TrainingSessionScreenState
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
-                              crossAxisAlignment:
-                                  CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   obj.objective.label,
                                   style: const TextStyle(
                                     fontSize: 13,
-                                    fontWeight:
-                                        FontWeight.w500,
+                                    fontWeight: FontWeight.w500,
                                     color: Colors.black87,
                                   ),
                                 ),
-                                if (obj.notes != null &&
-                                    obj.notes!.isNotEmpty)
+                                if (obj.notes != null && obj.notes!.isNotEmpty)
                                   Padding(
-                                    padding:
-                                        const EdgeInsets
-                                            .only(top: 4),
+                                    padding: const EdgeInsets.only(top: 4),
                                     child: Text(
                                       obj.notes!,
                                       style: TextStyle(
                                         fontSize: 11,
-                                        color: Colors
-                                            .grey.shade600,
-                                        fontStyle:
-                                            FontStyle.italic,
+                                        color: Colors.grey.shade600,
+                                        fontStyle: FontStyle.italic,
                                       ),
                                     ),
                                   ),
@@ -879,11 +879,9 @@ class _TrainingSessionScreenState
                 ],
               ),
             ),
-          if (_objectivesExpanded &&
-              sessionState.objectivesCompleted.isEmpty)
+          if (_objectivesExpanded && sessionState.objectivesCompleted.isEmpty)
             Padding(
-              padding:
-                  const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Text(
                 'No objectives completed yet. Keep working to achieve them!',
                 style: TextStyle(

@@ -132,16 +132,10 @@ class ScenarioContext {
   final int id;
   final String name;
 
-  ScenarioContext({
-    required this.id,
-    required this.name,
-  });
+  ScenarioContext({required this.id, required this.name});
 
   factory ScenarioContext.fromJson(Map<String, dynamic> json) {
-    return ScenarioContext(
-      id: json['id'] as int,
-      name: json['name'] as String,
-    );
+    return ScenarioContext(id: json['id'] as int, name: json['name'] as String);
   }
 }
 
@@ -301,7 +295,7 @@ class SessionMessageResponse {
   final int maxScore;
   final List<SessionObjective> objectivesCompleted;
   final bool appointmentSet;
-  final String? audioBase64;  // MP3 audio encoded as base64 (if voice=true)
+  final String? audioBase64; // MP3 audio encoded as base64 (if voice=true)
 
   SessionMessageResponse({
     required this.reply,
@@ -349,7 +343,8 @@ class SessionEndResponse {
     return SessionEndResponse(
       finalScore: json['final_score'] as int,
       personality: PersonalityTemplate.fromJson(
-          json['personality'] as Map<String, dynamic>),
+        json['personality'] as Map<String, dynamic>,
+      ),
       traitSet: TraitSet.fromJson(json['trait_set'] as Map<String, dynamic>),
       discType: json['disc_type'] as String,
       objectives: (json['objectives'] as List)
@@ -473,7 +468,8 @@ class SessionReviewResponse {
           : null,
       discType: json['disc_type'] as String,
       personality: PersonalityTemplate.fromJson(
-          json['personality'] as Map<String, dynamic>),
+        json['personality'] as Map<String, dynamic>,
+      ),
       traitSet: TraitSet.fromJson(json['trait_set'] as Map<String, dynamic>),
       objectives: (json['objectives'] as List)
           .map((e) => SessionObjective.fromJson(e as Map<String, dynamic>))
@@ -616,15 +612,19 @@ class UserStats {
           .toList(),
       discBreakdown: {
         for (var entry in (json['disc_breakdown'] as Map).entries)
-          entry.key as String: DiscTypeStats.fromJson(entry.value as Map<String, dynamic>)
+          entry.key as String: DiscTypeStats.fromJson(
+            entry.value as Map<String, dynamic>,
+          ),
       },
       scenarioPerformance: (json['scenario_performance'] as List)
           .map((e) => ScenarioPerformance.fromJson(e as Map<String, dynamic>))
           .toList(),
       topScenarios: json['top_scenarios'] != null
           ? (json['top_scenarios'] as List)
-              .map((e) => TopScenarioStats.fromJson(e as Map<String, dynamic>))
-              .toList()
+                .map(
+                  (e) => TopScenarioStats.fromJson(e as Map<String, dynamic>),
+                )
+                .toList()
           : [],
     );
   }
@@ -748,12 +748,12 @@ class TeamStats extends Team {
     required this.bestScore,
     required this.appointmentRate,
   }) : super(
-    id: id,
-    orgId: orgId,
-    name: name,
-    description: description,
-    createdAt: createdAt,
-  );
+         id: id,
+         orgId: orgId,
+         name: name,
+         description: description,
+         createdAt: createdAt,
+       );
 
   factory TeamStats.fromJson(Map<String, dynamic> json) {
     return TeamStats(

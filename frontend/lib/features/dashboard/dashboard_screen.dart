@@ -74,9 +74,9 @@ class DashboardScreen extends ConsumerWidget {
                   contentPadding: EdgeInsets.zero,
                   visualDensity: VisualDensity.compact,
                 ),
-                onTap: () => Future.microtask(
-                  () { if (context.mounted) showServerDialog(context, ref); },
-                ),
+                onTap: () => Future.microtask(() {
+                  if (context.mounted) showServerDialog(context, ref);
+                }),
               ),
               PopupMenuItem(
                 child: const ListTile(
@@ -95,9 +95,7 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
       body: statsAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -111,9 +109,9 @@ class DashboardScreen extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 error.toString(),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -135,17 +133,17 @@ class DashboardScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Welcome back, ${(authState.user?.name ?? '').split(' ').firstOrNull ?? 'there'}!',  
+                    'Welcome back, ${(authState.user?.name ?? '').split(' ').firstOrNull ?? 'there'}!',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Ready to sharpen your skills?',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.grey.shade600,
-                        ),
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                 ],
               ),
@@ -176,7 +174,10 @@ class DashboardScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -194,15 +195,13 @@ class DashboardScreen extends ConsumerWidget {
                               children: [
                                 Text(
                                   'Manage Scenarios',
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                                 Text(
                                   'Create and customize scenarios',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: Colors.grey.shade600,
-                                      ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(color: Colors.grey.shade600),
                                 ),
                               ],
                             ),
@@ -219,69 +218,62 @@ class DashboardScreen extends ConsumerWidget {
                 ),
               ),
               // My Team card (org_admin only)
-              if (authState.user?.orgRole == 'org_admin') ...
-                [
-                  const SizedBox(height: 12),
-                  InkWell(
-                    onTap: () => context.push('/org-analytics'),
-                    child: Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+              if (authState.user?.orgRole == 'org_admin') ...[
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () => context.push('/org-analytics'),
+                  child: Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.bar_chart_rounded,
-                                  color: Colors.teal.shade600,
-                                  size: 28,
-                                ),
-                                const SizedBox(width: 16),
-                                Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      'My Team',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(
-                                              fontWeight:
-                                                  FontWeight.bold),
-                                    ),
-                                    Text(
-                                      'View team performance',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                              color:
-                                                  Colors.grey.shade600),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            Icon(
-                              Icons.arrow_forward_ios,
-                              size: 16,
-                              color: Colors.grey.shade400,
-                            ),
-                          ],
-                        ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.bar_chart_rounded,
+                                color: Colors.teal.shade600,
+                                size: 28,
+                              ),
+                              const SizedBox(width: 16),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'My Team',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    'View team performance',
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(color: Colors.grey.shade600),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: Colors.grey.shade400,
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                ],
+                ),
+              ],
               const SizedBox(height: 24),
               // Key Stats Grid (2x2)
               GridView.count(
@@ -323,9 +315,9 @@ class DashboardScreen extends ConsumerWidget {
               // Score Progression Section
               Text(
                 'Score Progression',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 12),
               Card(
@@ -343,21 +335,17 @@ class DashboardScreen extends ConsumerWidget {
               // DISC Breakdown Section
               Text(
                 'Performance by Personality Type',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 12),
-              DiscBreakdownCard(
-                discBreakdown: stats.discBreakdown,
-              ),
+              DiscBreakdownCard(discBreakdown: stats.discBreakdown),
               const SizedBox(height: 32),
 
               // Top Scenarios Section
               if (stats.topScenarios.isNotEmpty)
-                TopScenariosCard(
-                  topScenarios: stats.topScenarios,
-                ),
+                TopScenariosCard(topScenarios: stats.topScenarios),
               if (stats.topScenarios.isNotEmpty) const SizedBox(height: 32),
 
               // Scenario Performance Section
@@ -368,8 +356,8 @@ class DashboardScreen extends ConsumerWidget {
                     Text(
                       'Performance by Scenario',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     ListView.builder(
@@ -415,8 +403,9 @@ class DashboardScreen extends ConsumerWidget {
                                         ),
                                       ),
                                       backgroundColor: Colors.teal.shade100,
-                                      labelStyle:
-                                          TextStyle(color: Colors.teal.shade800),
+                                      labelStyle: TextStyle(
+                                        color: Colors.teal.shade800,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -453,14 +442,13 @@ class DashboardScreen extends ConsumerWidget {
                                   child: LinearProgressIndicator(
                                     value: scenario.avgScore / 100,
                                     minHeight: 6,
-                                    backgroundColor:
-                                        Colors.grey.shade300,
+                                    backgroundColor: Colors.grey.shade300,
                                     valueColor: AlwaysStoppedAnimation(
                                       scenario.avgScore >= 80
                                           ? Colors.green.shade500
                                           : scenario.avgScore >= 60
-                                              ? Colors.blue.shade500
-                                              : Colors.orange.shade500,
+                                          ? Colors.blue.shade500
+                                          : Colors.orange.shade500,
                                     ),
                                   ),
                                 ),

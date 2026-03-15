@@ -49,16 +49,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final email = _emailController.text.trim();
 
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Name cannot be empty')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Name cannot be empty')));
       return;
     }
 
     if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email cannot be empty')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Email cannot be empty')));
       return;
     }
 
@@ -77,12 +77,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     // Only call if something changed
     if (updatedName != null || updatedEmail != null || voiceChanged) {
-      await ref.read(authProvider.notifier).updateProfile(
-        name: updatedName,
-        email: updatedEmail,
-        updateVoice: voiceChanged,
-        voicePreference: voiceChanged ? _selectedVoice : null,
-      );
+      await ref
+          .read(authProvider.notifier)
+          .updateProfile(
+            name: updatedName,
+            email: updatedEmail,
+            updateVoice: voiceChanged,
+            voicePreference: voiceChanged ? _selectedVoice : null,
+          );
     }
 
     if (!mounted) return;
@@ -109,10 +111,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     // Get initials from name
     final initials = user?.name.isNotEmpty == true
         ? user!.name
-            .split(' ')
-            .take(2)
-            .map((part) => part[0].toUpperCase())
-            .join()
+              .split(' ')
+              .take(2)
+              .map((part) => part[0].toUpperCase())
+              .join()
         : '?';
 
     return Scaffold(
@@ -155,10 +157,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     const SizedBox(height: 12),
                     Text(
                       user?.name ?? 'User',
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -181,9 +181,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       children: [
                         Text(
                           'Organization Information',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
+                          style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 12),
@@ -191,17 +189,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           children: [
                             Text(
                               'Organization ID: ',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
+                              style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(fontWeight: FontWeight.w600),
                             ),
                             Expanded(
                               child: Text(
                                 '#${user?.orgId}',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium,
+                                style: Theme.of(context).textTheme.bodyMedium,
                               ),
                             ),
                           ],
@@ -211,9 +205,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           children: [
                             Text(
                               'Role: ',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
+                              style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(fontWeight: FontWeight.w600),
                             ),
                             Expanded(
@@ -278,16 +270,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         children: [
                           Text(
                             'AI Voice Preference',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 12),
                           // Use scenario default option
                           RadioListTile<String?>(
                             value: null,
                             groupValue: _selectedVoice,
-                            onChanged: isLoading ? null : (value) => setState(() => _checkForChanges()),
+                            onChanged: isLoading
+                                ? null
+                                : (value) => setState(() => _checkForChanges()),
                             title: const Text('Use scenario default'),
                             subtitle: Text(
                               'Voice determined by personality type (D/I/S/C)',
@@ -299,12 +292,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           RadioListTile<String?>(
                             value: 'alloy',
                             groupValue: _selectedVoice,
-                            onChanged: isLoading ? null : (value) {
-                              setState(() {
-                                _selectedVoice = value;
-                                _checkForChanges();
-                              });
-                            },
+                            onChanged: isLoading
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      _selectedVoice = value;
+                                      _checkForChanges();
+                                    });
+                                  },
                             title: const Text('Alloy'),
                             subtitle: Text(
                               'Neutral & balanced',
@@ -316,12 +311,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           RadioListTile<String?>(
                             value: 'echo',
                             groupValue: _selectedVoice,
-                            onChanged: isLoading ? null : (value) {
-                              setState(() {
-                                _selectedVoice = value;
-                                _checkForChanges();
-                              });
-                            },
+                            onChanged: isLoading
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      _selectedVoice = value;
+                                      _checkForChanges();
+                                    });
+                                  },
                             title: const Text('Echo'),
                             subtitle: Text(
                               'Analytical & measured (C default)',
@@ -333,12 +330,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           RadioListTile<String?>(
                             value: 'fable',
                             groupValue: _selectedVoice,
-                            onChanged: isLoading ? null : (value) {
-                              setState(() {
-                                _selectedVoice = value;
-                                _checkForChanges();
-                              });
-                            },
+                            onChanged: isLoading
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      _selectedVoice = value;
+                                      _checkForChanges();
+                                    });
+                                  },
                             title: const Text('Fable'),
                             subtitle: Text(
                               'Expressive & warm',
@@ -350,12 +349,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           RadioListTile<String?>(
                             value: 'onyx',
                             groupValue: _selectedVoice,
-                            onChanged: isLoading ? null : (value) {
-                              setState(() {
-                                _selectedVoice = value;
-                                _checkForChanges();
-                              });
-                            },
+                            onChanged: isLoading
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      _selectedVoice = value;
+                                      _checkForChanges();
+                                    });
+                                  },
                             title: const Text('Onyx'),
                             subtitle: Text(
                               'Authoritative & deep (D default)',
@@ -367,12 +368,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           RadioListTile<String?>(
                             value: 'nova',
                             groupValue: _selectedVoice,
-                            onChanged: isLoading ? null : (value) {
-                              setState(() {
-                                _selectedVoice = value;
-                                _checkForChanges();
-                              });
-                            },
+                            onChanged: isLoading
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      _selectedVoice = value;
+                                      _checkForChanges();
+                                    });
+                                  },
                             title: const Text('Nova'),
                             subtitle: Text(
                               'Enthusiastic & bright (I default)',
@@ -384,12 +387,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           RadioListTile<String?>(
                             value: 'shimmer',
                             groupValue: _selectedVoice,
-                            onChanged: isLoading ? null : (value) {
-                              setState(() {
-                                _selectedVoice = value;
-                                _checkForChanges();
-                              });
-                            },
+                            onChanged: isLoading
+                                ? null
+                                : (value) {
+                                    setState(() {
+                                      _selectedVoice = value;
+                                      _checkForChanges();
+                                    });
+                                  },
                             title: const Text('Shimmer'),
                             subtitle: Text(
                               'Gentle & calm (S default)',
@@ -437,9 +442,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               Text(
                 'Changes are saved to your account.',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[600],
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
               ),
             ],
           ),
@@ -486,7 +491,10 @@ class _RoleBadge extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-            color: color, fontSize: 12, fontWeight: FontWeight.w600),
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

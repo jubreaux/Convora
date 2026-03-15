@@ -29,15 +29,18 @@ class OrgAnalyticsScreen extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline, size: 48, color: Colors.red),
               const SizedBox(height: 16),
-              Text('Failed to load analytics',
-                  style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'Failed to load analytics',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 8),
-              Text(error.toString(),
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.grey.shade600),
-                  textAlign: TextAlign.center),
+              Text(
+                error.toString(),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: () => ref.refresh(orgAnalyticsProvider),
@@ -53,17 +56,26 @@ class OrgAnalyticsScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.bar_chart_rounded,
-                      size: 64, color: Colors.grey.shade400),
+                  Icon(
+                    Icons.bar_chart_rounded,
+                    size: 64,
+                    color: Colors.grey.shade400,
+                  ),
                   const SizedBox(height: 16),
-                  Text('No data yet',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.grey.shade600)),
+                  Text(
+                    'No data yet',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text('Stats will appear once team members complete sessions.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey.shade500),
-                      textAlign: TextAlign.center),
+                  Text(
+                    'Stats will appear once team members complete sessions.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ],
               ),
             );
@@ -74,16 +86,17 @@ class OrgAnalyticsScreen extends ConsumerWidget {
             ..sort((a, b) => b.avgScore.compareTo(a.avgScore));
 
           // Compute org totals
-          final totalSessions =
-              sorted.fold(0, (sum, m) => sum + m.totalSessions);
+          final totalSessions = sorted.fold(
+            0,
+            (sum, m) => sum + m.totalSessions,
+          );
           final avgScore = sorted.isEmpty
               ? 0.0
-              : sorted.fold(0.0, (sum, m) => sum + m.avgScore) /
-                  sorted.length;
+              : sorted.fold(0.0, (sum, m) => sum + m.avgScore) / sorted.length;
           final avgApptRate = sorted.isEmpty
               ? 0.0
               : sorted.fold(0.0, (sum, m) => sum + m.appointmentRate) /
-                  sorted.length;
+                    sorted.length;
 
           return Column(
             children: [
@@ -168,27 +181,32 @@ class _SummaryChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2)),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
         children: [
           Icon(icon, color: color, size: 22),
           const SizedBox(height: 6),
-          Text(value,
-              style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18)),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(label,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Colors.grey.shade600),
-              textAlign: TextAlign.center),
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -210,10 +228,10 @@ class _AnalyticsTile extends StatelessWidget {
     final rankColor = rank == 1
         ? Colors.amber
         : rank == 2
-            ? Colors.blueGrey.shade400
-            : rank == 3
-                ? Colors.brown.shade300
-                : Colors.grey.shade300;
+        ? Colors.blueGrey.shade400
+        : rank == 3
+        ? Colors.brown.shade300
+        : Colors.grey.shade300;
 
     return Card(
       elevation: 1,
@@ -228,15 +246,17 @@ class _AnalyticsTile extends StatelessWidget {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                  color: rankColor,
-                  shape: BoxShape.circle),
+                color: rankColor,
+                shape: BoxShape.circle,
+              ),
               child: Center(
                 child: Text(
                   '#$rank',
                   style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 11,
-                      color: rank <= 3 ? Colors.white : Colors.grey.shade700),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                    color: rank <= 3 ? Colors.white : Colors.grey.shade700,
+                  ),
                 ),
               ),
             ),
@@ -250,19 +270,24 @@ class _AnalyticsTile extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
-                        child: Text(member.userName,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600, fontSize: 15),
-                            overflow: TextOverflow.ellipsis),
+                        child: Text(
+                          member.userName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       _RoleBadge(role: member.orgRole),
                     ],
                   ),
-                  Text(member.userEmail,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: Colors.grey.shade600)),
+                  Text(
+                    member.userEmail,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   // Stats row
                   Wrap(
@@ -276,8 +301,7 @@ class _AnalyticsTile extends StatelessWidget {
                       ),
                       _StatPill(
                         icon: Icons.trending_up_rounded,
-                        label:
-                            'Avg ${member.avgScore.toStringAsFixed(1)}',
+                        label: 'Avg ${member.avgScore.toStringAsFixed(1)}',
                         color: Colors.blue,
                       ),
                       _StatPill(
@@ -308,8 +332,11 @@ class _StatPill extends StatelessWidget {
   final String label;
   final Color color;
 
-  const _StatPill(
-      {required this.icon, required this.label, required this.color});
+  const _StatPill({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -318,11 +345,12 @@ class _StatPill extends StatelessWidget {
       children: [
         Icon(icon, size: 13, color: color),
         const SizedBox(width: 3),
-        Text(label,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: Colors.grey.shade700)),
+        Text(
+          label,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade700),
+        ),
       ],
     );
   }
@@ -361,7 +389,10 @@ class _RoleBadge extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-            color: color, fontSize: 11, fontWeight: FontWeight.w600),
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, LogOut, Home, Users, Settings } from 'lucide-react';
+import { Menu, X, LogOut, Home, Users, Settings, Download } from 'lucide-react';
 import api from '../services/api';
 import { User } from '../types';
 
@@ -61,6 +61,15 @@ const Layout: React.FC<LayoutProps> = ({ children, user }) => {
               <span>{label}</span>
             </Link>
           ))}
+          <a
+            href="https://admin.convora.customertest.digitalbullet.net/downloads/convora-latest.apk"
+            download
+            className="flex items-center space-x-3 px-4 py-3 rounded-lg transition text-green-400 hover:bg-gray-800"
+            title="Download Android APK"
+          >
+            <Download size={20} />
+            <span>Download APK</span>
+          </a>
         </nav>
       </div>
 

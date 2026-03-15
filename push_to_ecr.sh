@@ -228,7 +228,8 @@ upload_admin_to_s3() {
     --delete \
     --cache-control "public, max-age=3600" \
     --exclude ".git" \
-    --exclude "node_modules"; then
+    --exclude "node_modules" \
+    --exclude "downloads/*"; then
     log_info "Admin web app uploaded to S3 successfully ✅"
     log_info "URL: https://${S3_ADMIN_PATH}.${S3_BUCKET_NAME}/"
     return 0
@@ -273,8 +274,58 @@ upload_apk_to_s3() {
   fi
 }
 
+# Usage / help
+usage() {
+  echo "Usage: $0 [--backend] [--admin] [--apk] [--all]"
+  echo ""
+  echo "  No flags       Build and deploy everything (same as --all)"
+  echo "  --backend      Build & push backend Docker image to ECR"
+  echo "  --admin        Build & push admin Docker image + React web app to S3"
+  echo "  --apk          Build Flutter APK and upload to S3"
+  echo "  --all          Build and deploy everything"
+  echo ""
+  echo "Examples:"
+  echo "  bash push_to_ecr.sh                 # deploy everything"
+  echo "  bash push_to_ecr.sh --apk           # just build & upload APK"
+  echo "  bash push_to_ecr.sh --admin         # just rebuild admin web app"
+  echo "  bash push_to_ecr.sh --backend       # just push new backend container"
+  echo "  bash push_to_ecr.sh --backend --apk # backend + APK"
+}
+
 # Main execution
 main() {
+  local do_backend=false
+  local do_admin=false
+  local do_apk=false
+
+  if [[ $# -eq 0 ]]; then
+    do_backend=true
+    do_admin=true
+    do_apk=true
+  fi
+
+  for arg in "$@"; do
+    case "$arg" in
+      --backend) do_backend=true ;;
+      --admin)   do_admin=true ;;
+      --apk)     do_apk=true ;;
+      --all)
+        do_backend=true
+        do_admin=true
+        do_apk=true
+        ;;
+      --help|-h)
+        usage
+        exit 0
+        ;;
+      *)
+        log_error "Unknown flag: $arg"
+        usage
+        exit 1
+        ;;
+    esac
+  done
+
   log_info "Starting Convora build & deploy script..."
   log_info "AWS Region: $AWS_REGION"
   log_info "ECR Registry: $ECR_REGISTRY"
@@ -283,104 +334,111 @@ main() {
   log_info "API Endpoint: https://api.convora.customertest.digitalbullet.net"
   log_info "Git Commit: $GIT_COMMIT"
   log_info "Target Platform: linux/amd64 (x86_64 server-compatible)"
-  
+  log_info "Building: backend=$do_backend  admin=$do_admin  apk=$do_apk"
+
   check_prerequisites
-  login_to_ecr
-  
-  # Create repositories if needed
-  create_ecr_repo_if_needed "${BACKEND_REPO}"
-  create_ecr_repo_if_needed "${ADMIN_REPO}"
-  
-  # Build and push backend
-  if build_and_push "backend" "${BACKEND_REPO}" "./backend/Dockerfile"; then
-    log_info "Backend pushed successfully"
-  else
-    log_error "Failed to push backend"
-    exit 1
+
+  # ECR login only needed when pushing containers
+  if [[ "$do_backend" == true || "$do_admin" == true ]]; then
+    login_to_ecr
+    create_ecr_repo_if_needed "${BACKEND_REPO}"
+    create_ecr_repo_if_needed "${ADMIN_REPO}"
   fi
-  
-  # Build and push admin
-  if build_and_push "admin" "${ADMIN_REPO}" "./admin/Dockerfile"; then
-    log_info "Admin pushed successfully"
-  else
-    log_error "Failed to push admin"
-    exit 1
-  fi
-  
-  log_info "All images pushed to ECR successfully! ✅"
-  log_info "Backend: ${ECR_REGISTRY}/${BACKEND_REPO}:latest"
-  log_info "Admin Container: ${ECR_REGISTRY}/${ADMIN_REPO}:latest"
-  
-  # Build and upload admin web app to S3
-  log_info ""
-  log_info "================================"
-  log_info "Building & Uploading Admin Web App to S3"
-  log_info "================================"
-  if build_admin_web; then
-    if upload_admin_to_s3; then
-      log_info "Admin web app deployed successfully ✅"
-    else
-      log_warn "Admin web app built but S3 upload failed"
-    fi
-  else
-    log_warn "Admin web app build failed (skipping S3 upload)"
-  fi
-  
-  # Build Flutter APK
-  log_info ""
-  log_info "================================"
-  log_info "Building Flutter APK..."
-  log_info "================================"
-  if build_flutter_apk; then
-    log_info "Flutter APK built successfully ✅"
-    
-    # Upload APK to S3
+
+  # ── Backend ──────────────────────────────────────────────────
+  if [[ "$do_backend" == true ]]; then
     log_info ""
     log_info "================================"
-    log_info "Uploading Flutter APK to S3"
+    log_info "Building & Pushing Backend"
     log_info "================================"
-    if upload_apk_to_s3; then
-      log_info "Flutter APK deployed successfully ✅"
+    if build_and_push "backend" "${BACKEND_REPO}" "./backend/Dockerfile"; then
+      log_info "Backend pushed successfully ✅"
     else
-      log_warn "Flutter APK built but S3 upload failed"
+      log_error "Failed to push backend"
+      exit 1
     fi
-  else
-    log_warn "Flutter APK build skipped or failed (Flutter SDK may not be installed)"
   fi
-  
-  # Update CloudFront distribution
-  log_info ""
-  log_info "================================"
-  log_info "Updating CloudFront Distribution"
-  log_info "================================"
-  if python3 "$(dirname "$0")/update_cloudfront.py"; then
-    log_info "CloudFront updated successfully ✅"
-  else
-    log_warn "CloudFront update failed (distribution may already be configured)"
+
+  # ── Admin container + React web app + CloudFront/Route53 ──────
+  if [[ "$do_admin" == true ]]; then
+    log_info ""
+    log_info "================================"
+    log_info "Building & Pushing Admin Container"
+    log_info "================================"
+    if build_and_push "admin" "${ADMIN_REPO}" "./admin/Dockerfile"; then
+      log_info "Admin container pushed successfully ✅"
+    else
+      log_error "Failed to push admin container"
+      exit 1
+    fi
+
+    log_info ""
+    log_info "================================"
+    log_info "Building & Uploading Admin Web App to S3"
+    log_info "================================"
+    if build_admin_web; then
+      if upload_admin_to_s3; then
+        log_info "Admin web app deployed successfully ✅"
+      else
+        log_warn "Admin web app built but S3 upload failed"
+      fi
+    else
+      log_warn "Admin web app build failed (skipping S3 upload)"
+    fi
+
+    log_info ""
+    log_info "================================"
+    log_info "Updating CloudFront Distribution"
+    log_info "================================"
+    if python3 "$(dirname "$0")/update_cloudfront.py"; then
+      log_info "CloudFront updated successfully ✅"
+    else
+      log_warn "CloudFront update failed (distribution may already be configured)"
+    fi
+
+    log_info ""
+    log_info "================================"
+    log_info "Updating Route53 DNS"
+    log_info "================================"
+    if python3 "$(dirname "$0")/update_route53.py"; then
+      log_info "Route53 DNS updated successfully ✅"
+    else
+      log_warn "Route53 update failed (DNS may already be configured)"
+    fi
   fi
-  
-  # Update Route53 DNS
-  log_info ""
-  log_info "================================"
-  log_info "Updating Route53 DNS"
-  log_info "================================"
-  if python3 "$(dirname "$0")/update_route53.py"; then
-    log_info "Route53 DNS updated successfully ✅"
-  else
-    log_warn "Route53 update failed (DNS may already be configured)"
+
+  # ── Flutter APK ───────────────────────────────────────────────
+  if [[ "$do_apk" == true ]]; then
+    log_info ""
+    log_info "================================"
+    log_info "Building Flutter APK"
+    log_info "================================"
+    if build_flutter_apk; then
+      log_info "Flutter APK built successfully ✅"
+
+      log_info ""
+      log_info "================================"
+      log_info "Uploading Flutter APK to S3"
+      log_info "================================"
+      if upload_apk_to_s3; then
+        log_info "Flutter APK deployed successfully ✅"
+      else
+        log_warn "Flutter APK built but S3 upload failed"
+      fi
+    else
+      log_warn "Flutter APK build skipped or failed (Flutter SDK may not be installed)"
+    fi
   fi
-  
+
   log_info ""
   log_info "================================"
   log_info "✅ Build & Deploy Complete!"
   log_info "================================"
   log_info ""
   log_info "Deployed artifacts:"
-  log_info "  Backend Container: ${ECR_REGISTRY}/${BACKEND_REPO}:latest"
-  log_info "  Admin Container: ${ECR_REGISTRY}/${ADMIN_REPO}:latest"
-  log_info "  Admin Web App: https://${S3_ADMIN_PATH}.${S3_BUCKET_NAME}/"
-  log_info "  API Endpoint: https://api.convora.customertest.digitalbullet.net"
-  log_info "  Flutter APK: https://${S3_ADMIN_PATH}.${S3_BUCKET_NAME}/downloads/convora-latest.apk"
+  [[ "$do_backend" == true ]] && log_info "  Backend Container: ${ECR_REGISTRY}/${BACKEND_REPO}:latest"
+  [[ "$do_admin" == true ]]   && log_info "  Admin Web App:     https://admin.convora.customertest.digitalbullet.net/"
+  [[ "$do_apk" == true ]]     && log_info "  Flutter APK:       https://admin.convora.customertest.digitalbullet.net/downloads/convora-latest.apk"
 }
 
 # Run main function

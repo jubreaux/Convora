@@ -27,7 +27,9 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: authState.isAuthenticated ? '/dashboard' : '/login',
     redirect: (context, state) {
       final isAuth = authState.isAuthenticated;
-      final isLoggingIn = state.matchedLocation == '/login' || state.matchedLocation == '/register';
+      final isLoggingIn =
+          state.matchedLocation == '/login' ||
+          state.matchedLocation == '/register';
 
       if (!isAuth && !isLoggingIn) {
         return '/login';
@@ -38,10 +40,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
@@ -92,7 +91,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/scenario-form/:id',
         builder: (context, state) {
           final id = state.pathParameters['id'];
-          return ScenarioFormScreen(scenarioId: id != null ? int.parse(id) : null);
+          return ScenarioFormScreen(
+            scenarioId: id != null ? int.parse(id) : null,
+          );
         },
       ),
       GoRoute(

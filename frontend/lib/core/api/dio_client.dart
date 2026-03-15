@@ -24,10 +24,7 @@ class DioClient {
 
     // Add interceptor for JWT token
     dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: _onRequest,
-        onError: _onError,
-      ),
+      InterceptorsWrapper(onRequest: _onRequest, onError: _onError),
     );
   }
 
@@ -108,10 +105,7 @@ class ConvoraApiClient {
   }) async {
     final response = await dioClient.dio.post(
       '/auth/login',
-      data: {
-        'email': email,
-        'password': password,
-      },
+      data: {'email': email, 'password': password},
     );
     final authResponse = AuthResponse.fromJson(response.data);
     await dioClient.saveToken(authResponse.accessToken);
@@ -233,9 +227,7 @@ class ConvoraApiClient {
   /// Get all trait sets (for scenario creation/editing forms)
   Future<List<TraitSet>> getTraitSets() async {
     final response = await dioClient.dio.get('/metadata/trait-sets');
-    return (response.data as List)
-        .map((t) => TraitSet.fromJson(t))
-        .toList();
+    return (response.data as List).map((t) => TraitSet.fromJson(t)).toList();
   }
 
   /// Get all scenario contexts (for scenario creation/editing forms)
@@ -300,24 +292,19 @@ class ConvoraApiClient {
   /// Submit feedback (vote + comment) for a session
   Future<void> submitFeedback({
     required int sessionId,
-    required int vote,  // -1, 0, or 1
+    required int vote, // -1, 0, or 1
     String? comment,
   }) async {
     await dioClient.dio.post(
       '/sessions/$sessionId/feedback',
-      data: {
-        'vote': vote,
-        'comment': comment,
-      },
+      data: {'vote': vote, 'comment': comment},
     );
   }
 
   // ===== Organization =====
   Future<List<OrgMember>> getOrgMembers() async {
     final response = await dioClient.dio.get('/auth/org/members');
-    return (response.data as List)
-        .map((m) => OrgMember.fromJson(m))
-        .toList();
+    return (response.data as List).map((m) => OrgMember.fromJson(m)).toList();
   }
 
   Future<OrgMember> inviteOrgMember({
@@ -353,29 +340,25 @@ class ConvoraApiClient {
 
   Future<List<TeamStats>> getOrgTeams() async {
     final response = await dioClient.dio.get('/auth/org/teams');
-    return (response.data as List)
-        .map((t) => TeamStats.fromJson(t))
-        .toList();
+    return (response.data as List).map((t) => TeamStats.fromJson(t)).toList();
   }
 
   Future<TeamStats> createOrgTeam(String name, String? description) async {
     final response = await dioClient.dio.post(
       '/auth/org/teams',
-      data: {
-        'name': name,
-        'description': description,
-      },
+      data: {'name': name, 'description': description},
     );
     return TeamStats.fromJson(response.data);
   }
 
-  Future<TeamStats> updateOrgTeam(int teamId, String name, String? description) async {
+  Future<TeamStats> updateOrgTeam(
+    int teamId,
+    String name,
+    String? description,
+  ) async {
     final response = await dioClient.dio.put(
       '/auth/org/teams/$teamId',
-      data: {
-        'name': name,
-        'description': description,
-      },
+      data: {'name': name, 'description': description},
     );
     return TeamStats.fromJson(response.data);
   }
@@ -394,10 +377,7 @@ class ConvoraApiClient {
   Future<void> addTeamMember(int teamId, int userId, bool isTeamLead) async {
     await dioClient.dio.post(
       '/auth/org/teams/$teamId/members',
-      data: {
-        'user_id': userId,
-        'is_team_lead': isTeamLead,
-      },
+      data: {'user_id': userId, 'is_team_lead': isTeamLead},
     );
   }
 
@@ -406,7 +386,9 @@ class ConvoraApiClient {
   }
 
   Future<List<MemberSessionSummary>> getMemberSessions(int userId) async {
-    final response = await dioClient.dio.get('/auth/org/members/$userId/sessions');
+    final response = await dioClient.dio.get(
+      '/auth/org/members/$userId/sessions',
+    );
     return (response.data as List)
         .map((s) => MemberSessionSummary.fromJson(s))
         .toList();

@@ -30,15 +30,18 @@ class TeamsOverviewScreen extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline, size: 48, color: Colors.red),
               const SizedBox(height: 16),
-              Text('Failed to load teams',
-                  style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'Failed to load teams',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 8),
-              Text(error.toString(),
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.grey.shade600),
-                  textAlign: TextAlign.center),
+              Text(
+                error.toString(),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: () => ref.refresh(orgTeamsProvider),
@@ -54,17 +57,26 @@ class TeamsOverviewScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.groups_rounded,
-                      size: 64, color: Colors.grey.shade400),
+                  Icon(
+                    Icons.groups_rounded,
+                    size: 64,
+                    color: Colors.grey.shade400,
+                  ),
                   const SizedBox(height: 16),
-                  Text('No teams yet',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.grey.shade600)),
+                  Text(
+                    'No teams yet',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text('Create your first team to organize members and track performance.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey.shade500),
-                      textAlign: TextAlign.center),
+                  Text(
+                    'Create your first team to organize members and track performance.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
                     onPressed: () => _showCreateTeamDialog(context, ref),
@@ -96,7 +108,9 @@ class TeamsOverviewScreen extends ConsumerWidget {
                     Expanded(
                       child: _SummaryChip(
                         label: 'Total Members',
-                        value: teams.fold(0, (sum, t) => sum + t.memberCount).toString(),
+                        value: teams
+                            .fold(0, (sum, t) => sum + t.memberCount)
+                            .toString(),
                         icon: Icons.people_rounded,
                         color: Colors.blue,
                       ),
@@ -107,7 +121,9 @@ class TeamsOverviewScreen extends ConsumerWidget {
                         label: 'Org Avg Score',
                         value: teams.isEmpty
                             ? '0'
-                            : (teams.fold(0.0, (sum, t) => sum + t.avgScore) / teams.length).toStringAsFixed(1),
+                            : (teams.fold(0.0, (sum, t) => sum + t.avgScore) /
+                                      teams.length)
+                                  .toStringAsFixed(1),
                         icon: Icons.trending_up_rounded,
                         color: Colors.orange,
                       ),
@@ -183,21 +199,23 @@ class TeamsOverviewScreen extends ConsumerWidget {
               }
 
               try {
-                await ref.read(apiClientProvider).createOrgTeam(
-                  nameController.text,
-                  descriptionController.text.isEmpty
-                      ? null
-                      : descriptionController.text,
-                );
+                await ref
+                    .read(apiClientProvider)
+                    .createOrgTeam(
+                      nameController.text,
+                      descriptionController.text.isEmpty
+                          ? null
+                          : descriptionController.text,
+                    );
                 ref.refresh(orgTeamsProvider);
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Team created successfully')),
                 );
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error: $e')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('Error: $e')));
               }
             },
             child: const Text('Create'),
@@ -248,9 +266,7 @@ class _TeamCard extends StatelessWidget {
                         if (team.description != null)
                           Text(
                             team.description!,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: Colors.grey.shade600),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
@@ -258,8 +274,11 @@ class _TeamCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Icon(Icons.arrow_forward_ios,
-                      size: 16, color: Colors.grey.shade400),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Colors.grey.shade400,
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -324,27 +343,32 @@ class _SummaryChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2)),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
         children: [
           Icon(icon, color: color, size: 22),
           const SizedBox(height: 6),
-          Text(value,
-              style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18)),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(label,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Colors.grey.shade600),
-              textAlign: TextAlign.center),
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );

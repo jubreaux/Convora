@@ -32,19 +32,21 @@ class TeamDetailScreen extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline, size: 48, color: Colors.red),
               const SizedBox(height: 16),
-              Text('Failed to load members',
-                  style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'Failed to load members',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 8),
-              Text(error.toString(),
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.grey.shade600),
-                  textAlign: TextAlign.center),
+              Text(
+                error.toString(),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
-                onPressed: () =>
-                    ref.refresh(teamMembersProvider(teamId)),
+                onPressed: () => ref.refresh(teamMembersProvider(teamId)),
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
               ),
@@ -57,21 +59,29 @@ class TeamDetailScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.people_outline,
-                      size: 64, color: Colors.grey.shade400),
+                  Icon(
+                    Icons.people_outline,
+                    size: 64,
+                    color: Colors.grey.shade400,
+                  ),
                   const SizedBox(height: 16),
-                  Text('No members yet',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.grey.shade600)),
+                  Text(
+                    'No members yet',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text('Add members to this team to track their progress.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey.shade500),
-                      textAlign: TextAlign.center),
+                  Text(
+                    'Add members to this team to track their progress.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
-                    onPressed: () =>
-                        _showAddMemberDialog(context, ref, teamId),
+                    onPressed: () => _showAddMemberDialog(context, ref, teamId),
                     icon: const Icon(Icons.person_add),
                     label: const Text('Add Member'),
                   ),
@@ -85,8 +95,10 @@ class TeamDetailScreen extends ConsumerWidget {
             ..sort((a, b) => b.avgScore.compareTo(a.avgScore));
 
           // Compute team totals
-          final totalSessions =
-              sorted.fold(0, (sum, m) => sum + m.totalSessions);
+          final totalSessions = sorted.fold(
+            0,
+            (sum, m) => sum + m.totalSessions,
+          );
           final avgScore = sorted.isEmpty
               ? 0.0
               : sorted.fold(0.0, (sum, m) => sum + m.avgScore) / sorted.length;
@@ -175,21 +187,20 @@ class TeamDetailScreen extends ConsumerWidget {
                     subtitle: Text(member.userEmail ?? 'no-email'),
                     onTap: () async {
                       try {
-                        await ref.read(apiClientProvider).addTeamMember(
-                          teamId,
-                          member.userId,
-                          false,
-                        );
+                        await ref
+                            .read(apiClientProvider)
+                            .addTeamMember(teamId, member.userId, false);
                         ref.refresh(teamMembersProvider(teamId));
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text('Member added successfully')),
+                            content: Text('Member added successfully'),
+                          ),
                         );
                       } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error: $e')),
-                        );
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text('Error: $e')));
                       }
                     },
                   );
@@ -224,10 +235,10 @@ class _TeamMemberTile extends StatelessWidget {
     final rankColor = rank == 1
         ? Colors.amber
         : rank == 2
-            ? Colors.blueGrey.shade400
-            : rank == 3
-                ? Colors.brown.shade300
-                : Colors.grey.shade300;
+        ? Colors.blueGrey.shade400
+        : rank == 3
+        ? Colors.brown.shade300
+        : Colors.grey.shade300;
 
     return Card(
       elevation: 1,
@@ -245,14 +256,17 @@ class _TeamMemberTile extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                    color: rankColor, shape: BoxShape.circle),
+                  color: rankColor,
+                  shape: BoxShape.circle,
+                ),
                 child: Center(
                   child: Text(
                     '#$rank',
                     style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                        color: rank <= 3 ? Colors.white : Colors.grey.shade700),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                      color: rank <= 3 ? Colors.white : Colors.grey.shade700,
+                    ),
                   ),
                 ),
               ),
@@ -266,10 +280,14 @@ class _TeamMemberTile extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
-                          child: Text(member.userName,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w600, fontSize: 15),
-                              overflow: TextOverflow.ellipsis),
+                          child: Text(
+                            member.userName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         Row(
                           mainAxisSize: MainAxisSize.min,
@@ -277,7 +295,9 @@ class _TeamMemberTile extends StatelessWidget {
                             if (member.isTeamLead)
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    vertical: 2, horizontal: 8),
+                                  vertical: 2,
+                                  horizontal: 8,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.purple.shade100,
                                   borderRadius: BorderRadius.circular(12),
@@ -295,11 +315,12 @@ class _TeamMemberTile extends StatelessWidget {
                         ),
                       ],
                     ),
-                    Text(member.userEmail,
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: Colors.grey.shade600)),
+                    Text(
+                      member.userEmail,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
                     const SizedBox(height: 10),
                     // Stats row
                     Wrap(
@@ -313,8 +334,7 @@ class _TeamMemberTile extends StatelessWidget {
                         ),
                         _StatPill(
                           icon: Icons.trending_up_rounded,
-                          label:
-                              'Avg ${member.avgScore.toStringAsFixed(1)}',
+                          label: 'Avg ${member.avgScore.toStringAsFixed(1)}',
                           color: Colors.blue,
                         ),
                         _StatPill(
@@ -367,27 +387,32 @@ class _SummaryChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2)),
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
         children: [
           Icon(icon, color: color, size: 22),
           const SizedBox(height: 6),
-          Text(value,
-              style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18)),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(label,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: Colors.grey.shade600),
-              textAlign: TextAlign.center),
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );

@@ -11,9 +11,7 @@ class OrgMembersScreen extends ConsumerWidget {
     final membersAsync = ref.watch(orgMembersProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manage Team'),
-      ),
+      appBar: AppBar(title: const Text('Manage Team')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showInviteDialog(context, ref),
         icon: const Icon(Icons.person_add_alt_1_rounded),
@@ -28,15 +26,18 @@ class OrgMembersScreen extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline, size: 48, color: Colors.red),
               const SizedBox(height: 16),
-              Text('Failed to load members',
-                  style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'Failed to load members',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 8),
-              Text(error.toString(),
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.grey.shade600),
-                  textAlign: TextAlign.center),
+              Text(
+                error.toString(),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: () => ref.refresh(orgMembersProvider),
@@ -52,16 +53,25 @@ class OrgMembersScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.group_outlined,
-                      size: 64, color: Colors.grey.shade400),
+                  Icon(
+                    Icons.group_outlined,
+                    size: 64,
+                    color: Colors.grey.shade400,
+                  ),
                   const SizedBox(height: 16),
-                  Text('No team members yet',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.grey.shade600)),
+                  Text(
+                    'No team members yet',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text('Tap the button below to invite your first member.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey.shade500)),
+                  Text(
+                    'Tap the button below to invite your first member.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
                 ],
               ),
             );
@@ -76,8 +86,10 @@ class OrgMembersScreen extends ConsumerWidget {
               return _MemberTile(
                 member: member,
                 onDeactivate: () async {
-                  final confirmed =
-                      await _confirmDeactivate(context, member.userName ?? 'this member');
+                  final confirmed = await _confirmDeactivate(
+                    context,
+                    member.userName ?? 'this member',
+                  );
                   if (!confirmed) return;
                   try {
                     final apiClient = ref.read(apiClientProvider);
@@ -86,16 +98,18 @@ class OrgMembersScreen extends ConsumerWidget {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                            content: Text('Member deactivated'),
-                            backgroundColor: Colors.orange),
+                          content: Text('Member deactivated'),
+                          backgroundColor: Colors.orange,
+                        ),
                       );
                     }
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                            content: Text('Error: $e'),
-                            backgroundColor: Colors.red),
+                          content: Text('Error: $e'),
+                          backgroundColor: Colors.red,
+                        ),
                       );
                     }
                   }
@@ -121,8 +135,7 @@ class OrgMembersScreen extends ConsumerWidget {
               ),
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(true),
-                style:
-                    TextButton.styleFrom(foregroundColor: Colors.red),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
                 child: const Text('Deactivate'),
               ),
             ],
@@ -138,9 +151,8 @@ class OrgMembersScreen extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => _InviteSheet(
-        onInvited: () => ref.refresh(orgMembersProvider),
-      ),
+      builder: (ctx) =>
+          _InviteSheet(onInvited: () => ref.refresh(orgMembersProvider)),
     );
   }
 }
@@ -167,15 +179,15 @@ class _MemberTile extends StatelessWidget {
       elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
           backgroundColor: _roleColor(member.orgRole).withOpacity(0.15),
           child: Text(
             initials,
             style: TextStyle(
-                color: _roleColor(member.orgRole),
-                fontWeight: FontWeight.bold),
+              color: _roleColor(member.orgRole),
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -183,11 +195,12 @@ class _MemberTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (email.isNotEmpty)
-              Text(email,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: Colors.grey.shade600)),
+              Text(
+                email,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+              ),
             const SizedBox(height: 4),
             Row(
               children: [
@@ -209,10 +222,14 @@ class _MemberTile extends StatelessWidget {
                   const PopupMenuItem(
                     value: 'deactivate',
                     child: ListTile(
-                      leading: Icon(Icons.person_off_outlined,
-                          color: Colors.red),
-                      title: Text('Deactivate',
-                          style: TextStyle(color: Colors.red)),
+                      leading: Icon(
+                        Icons.person_off_outlined,
+                        color: Colors.red,
+                      ),
+                      title: Text(
+                        'Deactivate',
+                        style: TextStyle(color: Colors.red),
+                      ),
                       contentPadding: EdgeInsets.zero,
                       visualDensity: VisualDensity.compact,
                     ),
@@ -273,7 +290,10 @@ class _RoleBadge extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-            color: color, fontSize: 11, fontWeight: FontWeight.w600),
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -310,9 +330,10 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
     const chars =
         'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#\$';
     final password = List.generate(
-        12,
-        (i) => chars[
-            DateTime.now().microsecondsSinceEpoch * (i + 1) % chars.length]);
+      12,
+      (i) =>
+          chars[DateTime.now().microsecondsSinceEpoch * (i + 1) % chars.length],
+    );
     _passwordController.text = password.join();
   }
 
@@ -337,11 +358,12 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Invite Team Member',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.bold)),
+              Text(
+                'Invite Team Member',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
               IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () => Navigator.of(context).pop(),
@@ -362,32 +384,42 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.check_circle,
-                          color: Colors.teal.shade700, size: 20),
+                      Icon(
+                        Icons.check_circle,
+                        color: Colors.teal.shade700,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
-                      Text('Member invited!',
-                          style: TextStyle(
-                              color: Colors.teal.shade700,
-                              fontWeight: FontWeight.bold)),
+                      Text(
+                        'Member invited!',
+                        style: TextStyle(
+                          color: Colors.teal.shade700,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text('Share this temporary password with the new member:',
-                      style: Theme.of(context).textTheme.bodySmall),
+                  Text(
+                    'Share this temporary password with the new member:',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                   const SizedBox(height: 8),
                   SelectableText(
                     _tempPasswordShown!,
                     style: const TextStyle(
-                        fontFamily: 'monospace',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16),
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                   const SizedBox(height: 4),
-                  Text('They will be prompted to change it on first login.',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: Colors.grey.shade600)),
+                  Text(
+                    'They will be prompted to change it on first login.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -398,8 +430,9 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
                 widget.onInvited();
               },
               style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
-                  foregroundColor: Colors.white),
+                backgroundColor: Colors.teal,
+                foregroundColor: Colors.white,
+              ),
               child: const Text('Done'),
             ),
           ] else ...[
@@ -407,8 +440,9 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
               controller: _nameController,
               decoration: InputDecoration(
                 labelText: 'Full Name',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 prefixIcon: const Icon(Icons.person_outline),
               ),
             ),
@@ -417,8 +451,9 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
               controller: _emailController,
               decoration: InputDecoration(
                 labelText: 'Email Address',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 prefixIcon: const Icon(Icons.email_outlined),
               ),
               keyboardType: TextInputType.emailAddress,
@@ -428,14 +463,14 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
               value: _selectedRole,
               decoration: InputDecoration(
                 labelText: 'Role',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 prefixIcon: const Icon(Icons.badge_outlined),
               ),
               items: const [
                 DropdownMenuItem(value: 'member', child: Text('Member')),
-                DropdownMenuItem(
-                    value: 'team_lead', child: Text('Team Lead')),
+                DropdownMenuItem(value: 'team_lead', child: Text('Team Lead')),
                 DropdownMenuItem(value: 'org_admin', child: Text('Admin')),
               ],
               onChanged: (v) => setState(() => _selectedRole = v!),
@@ -445,8 +480,9 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
               controller: _passwordController,
               decoration: InputDecoration(
                 labelText: 'Temporary Password',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 prefixIcon: const Icon(Icons.lock_outline),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.refresh),
@@ -459,15 +495,18 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
             ElevatedButton(
               onPressed: _isSubmitting ? null : _submit,
               style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(48)),
+                backgroundColor: Colors.teal,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(48),
+              ),
               child: _isSubmitting
                   ? const SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
                     )
                   : const Text('Send Invite'),
             ),
@@ -484,17 +523,20 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
 
     if (email.isEmpty || !email.contains('@')) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a valid email')));
+        const SnackBar(content: Text('Please enter a valid email')),
+      );
       return;
     }
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a name')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please enter a name')));
       return;
     }
     if (password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please set a temporary password')));
+        const SnackBar(content: Text('Please set a temporary password')),
+      );
       return;
     }
 
@@ -516,8 +558,9 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Failed to invite member: $e'),
-              backgroundColor: Colors.red),
+            content: Text('Failed to invite member: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
