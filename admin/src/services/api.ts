@@ -38,14 +38,12 @@ class ApiClient {
       return config;
     });
 
-    // Handle errors globally
+    // Handle errors globally (but don't auto-redirect - let components handle it)
     this.api.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (error.response?.status === 401) {
-          this.clearToken();
-          window.location.href = '/login';
-        }
+        // Don't auto-redirect on 401 - let the component handle the error
+        // so users can see what went wrong instead of getting a hard reset
         return Promise.reject(error);
       }
     );
