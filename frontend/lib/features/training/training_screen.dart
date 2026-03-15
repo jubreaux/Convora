@@ -724,10 +724,7 @@ class _TrainingSessionScreenState
   // ---- Objectives Expandable Panel ----
   Widget _buildObjectivesPanel(ActiveSessionState sessionState) {
     final completed = sessionState.objectivesCompleted.length;
-    final total = sessionState.maxScore > 0
-        ? sessionState.objectivesCompleted.length +
-            (sessionState.maxScore - sessionState.currentScore) ~/ 10
-        : 0;
+    final isLoading = completed == 0 && sessionState.maxScore == 0;
 
     return Container(
       color: Colors.blue.shade50,
@@ -737,8 +734,10 @@ class _TrainingSessionScreenState
           Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () =>
-                  setState(() => _objectivesExpanded = !_objectivesExpanded),
+              onTap: isLoading
+                  ? null
+                  : () =>
+                      setState(() => _objectivesExpanded = !_objectivesExpanded),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 16, vertical: 12),
@@ -765,40 +764,51 @@ class _TrainingSessionScreenState
                             ),
                           ),
                           const SizedBox(height: 2),
-                          Text(
-                            '$completed / $total completed',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.blue.shade700,
+                          if (isLoading)
+                            Text(
+                              'Loading objectives...',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.blue.shade700,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            )
+                          else
+                            Text(
+                              '$completed / ${completed + (sessionState.maxScore > 0 ? ((sessionState.maxScore - sessionState.currentScore) ~/ 10) : 0)} completed',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.blue.shade700,
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade200.withValues(
-                            alpha: 0.3),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '$completed/$total',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade900,
+                    if (!isLoading)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade200.withValues(
+                              alpha: 0.3),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '$completed/${completed + (sessionState.maxScore > 0 ? ((sessionState.maxScore - sessionState.currentScore) ~/ 10) : 0)}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue.shade900,
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),
             ),
           ),
           // Expanded content
-          if (_objectivesExpanded && sessionState.objectivesCompleted.isNotEmpty)
+          if (_objectivesExpanded && !isLoading && sessionState.objectivesCompleted.isNotEmpty)
             Padding(
               padding:
                   const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -882,7 +892,7 @@ class _TrainingSessionScreenState
                 ],
               ),
             ),
-          if (_objectivesExpanded &&
+          if (_objectivesExpanded && !isLoading &&
               sessionState.objectivesCompleted.isEmpty)
             Padding(
               padding:
