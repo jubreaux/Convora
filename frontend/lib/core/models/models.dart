@@ -7,6 +7,7 @@ class User {
   final DateTime createdAt;
   final int? orgId;
   final String? orgRole;
+  final String? preferredVoice;
 
   User({
     required this.id,
@@ -16,6 +17,7 @@ class User {
     required this.createdAt,
     this.orgId,
     this.orgRole,
+    this.preferredVoice,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -27,6 +29,7 @@ class User {
       createdAt: DateTime.parse(json['created_at'] as String),
       orgId: json['org_id'] as int?,
       orgRole: json['org_role'] as String?,
+      preferredVoice: json['preferred_voice'] as String?,
     );
   }
 }

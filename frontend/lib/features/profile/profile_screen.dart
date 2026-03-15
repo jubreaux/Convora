@@ -12,6 +12,7 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
+  String? _selectedVoice;
   bool _hasChanges = false;
 
   @override
@@ -20,6 +21,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final user = ref.read(authProvider).user;
     _nameController = TextEditingController(text: user?.name ?? '');
     _emailController = TextEditingController(text: user?.email ?? '');
+    _selectedVoice = user?.preferredVoice;
 
     _nameController.addListener(_checkForChanges);
     _emailController.addListener(_checkForChanges);
@@ -30,7 +32,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     setState(() {
       _hasChanges =
           _nameController.text.trim() != (user?.name ?? '') ||
-          _emailController.text.trim() != (user?.email ?? '');
+          _emailController.text.trim() != (user?.email ?? '') ||
+          _selectedVoice != user?.preferredVoice;
     });
   }
 
@@ -70,12 +73,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final user = ref.read(authProvider).user;
     final updatedName = name != user?.name ? name : null;
     final updatedEmail = email != user?.email ? email : null;
+    final updatedVoice = _selectedVoice != user?.preferredVoice ? _selectedVoice : null;
 
     // Only call if something changed
-    if (updatedName != null || updatedEmail != null) {
+    if (updatedName != null || updatedEmail != null || updatedVoice != null) {
       await ref.read(authProvider.notifier).updateProfile(
         name: updatedName,
         email: updatedEmail,
+        voicePreference: updatedVoice,
       );
     }
 
@@ -200,6 +205,135 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           prefixIcon: const Icon(Icons.email_outlined),
                         ),
                         keyboardType: TextInputType.emailAddress,
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Voice preference section
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'AI Voice Preference',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          // Use scenario default option
+                          RadioListTile<String?>(
+                            value: null,
+                            groupValue: _selectedVoice,
+                            onChanged: isLoading ? null : (value) => setState(() => _checkForChanges()),
+                            title: const Text('Use scenario default'),
+                            subtitle: Text(
+                              'Voice determined by personality type (D/I/S/C)',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          // Alloy voice option
+                          RadioListTile<String?>(
+                            value: 'alloy',
+                            groupValue: _selectedVoice,
+                            onChanged: isLoading ? null : (value) {
+                              setState(() {
+                                _selectedVoice = value;
+                                _checkForChanges();
+                              });
+                            },
+                            title: const Text('Alloy'),
+                            subtitle: Text(
+                              'Neutral & balanced',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          // Echo voice option
+                          RadioListTile<String?>(
+                            value: 'echo',
+                            groupValue: _selectedVoice,
+                            onChanged: isLoading ? null : (value) {
+                              setState(() {
+                                _selectedVoice = value;
+                                _checkForChanges();
+                              });
+                            },
+                            title: const Text('Echo'),
+                            subtitle: Text(
+                              'Analytical & measured (C default)',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          // Fable voice option
+                          RadioListTile<String?>(
+                            value: 'fable',
+                            groupValue: _selectedVoice,
+                            onChanged: isLoading ? null : (value) {
+                              setState(() {
+                                _selectedVoice = value;
+                                _checkForChanges();
+                              });
+                            },
+                            title: const Text('Fable'),
+                            subtitle: Text(
+                              'Expressive & warm',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          // Onyx voice option
+                          RadioListTile<String?>(
+                            value: 'onyx',
+                            groupValue: _selectedVoice,
+                            onChanged: isLoading ? null : (value) {
+                              setState(() {
+                                _selectedVoice = value;
+                                _checkForChanges();
+                              });
+                            },
+                            title: const Text('Onyx'),
+                            subtitle: Text(
+                              'Authoritative & deep (D default)',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          // Nova voice option
+                          RadioListTile<String?>(
+                            value: 'nova',
+                            groupValue: _selectedVoice,
+                            onChanged: isLoading ? null : (value) {
+                              setState(() {
+                                _selectedVoice = value;
+                                _checkForChanges();
+                              });
+                            },
+                            title: const Text('Nova'),
+                            subtitle: Text(
+                              'Enthusiastic & bright (I default)',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          // Shimmer voice option
+                          RadioListTile<String?>(
+                            value: 'shimmer',
+                            groupValue: _selectedVoice,
+                            onChanged: isLoading ? null : (value) {
+                              setState(() {
+                                _selectedVoice = value;
+                                _checkForChanges();
+                              });
+                            },
+                            title: const Text('Shimmer'),
+                            subtitle: Text(
+                              'Gentle & calm (S default)',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ],
                       ),
                     ],
                   ),

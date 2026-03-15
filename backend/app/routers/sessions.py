@@ -202,7 +202,11 @@ async def send_message(
             raise HTTPException(status_code=404, detail="Scenario not found for audio synthesis")
         
         try:
-            audio_bytes = await synthesize_reply(result["reply"], scenario.disc_type)
+            audio_bytes = await synthesize_reply(
+                result["reply"],
+                scenario.disc_type,
+                voice_override=current_user.preferred_voice
+            )
             audio_base64 = encode_audio_base64(audio_bytes)
         except RuntimeError as e:
             # Voice mode is optional; fail loudly with meaningful error

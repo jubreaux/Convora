@@ -15,6 +15,7 @@ class User(Base):
     must_reset_password = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     is_deleted = Column(Boolean, default=False, nullable=False)
+    preferred_voice = Column(String(20), nullable=True)  # OpenAI TTS voice name
 
     # Relationships
     scenarios = relationship("Scenario", back_populates="created_by", foreign_keys="Scenario.created_by_user_id")

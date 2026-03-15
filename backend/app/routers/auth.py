@@ -175,6 +175,10 @@ async def update_me(
     if update_data.name is not None:
         user.name = update_data.name
     
+    # Update voice preference if provided
+    if update_data.preferred_voice is not None:
+        user.preferred_voice = update_data.preferred_voice
+    
     db.commit()
     db.refresh(user)
     

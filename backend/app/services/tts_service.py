@@ -17,13 +17,14 @@ DISC_VOICE_MAP = {
 }
 
 
-async def synthesize_reply(text: str, disc_type: str) -> bytes:
+async def synthesize_reply(text: str, disc_type: str, voice_override: str | None = None) -> bytes:
     """
     Synthesize speech using OpenAI TTS API.
     
     Args:
         text: The reply text to synthesize
         disc_type: The client's DISC personality type (D/I/S/C)
+        voice_override: Optional voice name to override DISC-based voice selection
     
     Returns:
         Raw MP3 bytes
@@ -40,7 +41,8 @@ async def synthesize_reply(text: str, disc_type: str) -> bytes:
             "Voice mode requires OpenAI TTS API access."
         )
     
-    voice = DISC_VOICE_MAP.get(disc_type, "alloy")
+    # Use voice override if provided, otherwise use DISC-based voice
+    voice = voice_override if voice_override else DISC_VOICE_MAP.get(disc_type, "alloy")
     
     client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
     

@@ -130,12 +130,14 @@ class ConvoraApiClient {
   Future<User> updateProfile({
     String? name,
     String? email,
+    String? voicePreference,
   }) async {
     final response = await dioClient.dio.put(
       '/auth/me',
       data: {
         if (name != null) 'name': name,
         if (email != null) 'email': email,
+        if (voicePreference != null) 'preferred_voice': voicePreference,
       },
     );
     return User.fromJson(response.data);

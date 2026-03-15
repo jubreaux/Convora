@@ -1,7 +1,7 @@
 from __future__ import annotations
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Literal
 
 
 # ===== Auth Schemas =====
@@ -13,6 +13,7 @@ class UserResponse(BaseModel):
     must_reset_password: bool
     org_id: Optional[int] = None  # Set if user is part of an organization
     org_role: Optional[str] = None  # "org_admin", "team_lead", "member" (populated from OrgMember)
+    preferred_voice: Optional[str] = None  # OpenAI TTS voice preference (alloy, echo, fable, onyx, nova, shimmer)
     created_at: datetime
 
     class Config:
@@ -51,9 +52,20 @@ class UserLogin(BaseModel):
 
 
 class UserSelfUpdate(BaseModel):
-    """Schema for user self-service profile updates (name and email only)."""
+    """Schema for user self-service profile updates (name, email, and voice preference)."""
     name: Optional[str] = None
     email: Optional[EmailStr] = None
+    preferred_voice: Optional[str] = None  # OpenAI TTS voice: alloy, echo, fable, onyx, nova, shimmer
+    
+    @field_validator('preferred_voice')
+    @classmethod
+    def validate_voice(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        valid_voices = {'alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'}
+        if v not in valid_voices:
+            raise ValueError(f'Voice must be one of {valid_voices}, got {v}')
+        return v
 
 
 class UserPasswordReset(BaseModel):

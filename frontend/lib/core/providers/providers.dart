@@ -213,6 +213,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> updateProfile({
     String? name,
     String? email,
+    String? voicePreference,
   }) async {
     if (state.user == null) return;
     state = state.copyWith(isLoading: true, error: null);
@@ -220,6 +221,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final updatedUser = await apiClient.updateProfile(
         name: name,
         email: email,
+        voicePreference: voicePreference,
       );
       state = state.copyWith(
         user: updatedUser,

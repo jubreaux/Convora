@@ -8,10 +8,21 @@ from app.models import (
 from app.routers import auth, scenarios, sessions, admin, metadata
 from seed.load_seed import seed_database
 import uvicorn
+from sqlalchemy import text
 
 
 # Create all tables
 Base.metadata.create_all(bind=engine)
+
+# Migrate: Add preferred_voice column to users table if it doesn't exist (idempotent)
+try:
+    with engine.connect() as conn:
+        conn.execute(text(
+            """ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_voice VARCHAR(20) NULL"""
+        ))
+        conn.commit()
+except Exception as e:
+    print(f"Note: Migration may have already run or DB not ready: {e}")
 
 # Seed database if needed
 try:
