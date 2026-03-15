@@ -118,6 +118,57 @@ build_and_push() {
   fi
 }
 
+# Build Flutter APK
+build_flutter_apk() {
+  log_info "Building Flutter APK..."
+  
+  if ! command -v flutter &> /dev/null; then
+    log_error "Flutter not found. Please install Flutter SDK first."
+    return 1
+  fi
+  
+  local flutter_dir="./frontend"
+  
+  if [ ! -d "$flutter_dir" ]; then
+    log_error "Flutter project directory not found: $flutter_dir"
+    return 1
+  fi
+  
+  # Build APK
+  log_info "Compiling Flutter APK (Release mode)..."
+  cd "$flutter_dir"
+  
+  if flutter build apk --release; then
+    log_info "Flutter APK built successfully"
+    
+    # Set up desktop build folder
+    local desktop_build_dir="$HOME/Desktop/convora_builds"
+    mkdir -p "$desktop_build_dir"
+    
+    # Copy APK to desktop
+    local apk_source="build/app/outputs/flutter-apk/app-release.apk"
+    local apk_dest="${desktop_build_dir}/convora-${GIT_COMMIT}-${TIMESTAMP}.apk"
+    
+    if [ -f "$apk_source" ]; then
+      cp "$apk_source" "$apk_dest"
+      log_info "APK copied to: $apk_dest"
+      log_info "Symlink as latest: $desktop_build_dir/convora-latest.apk"
+      ln -sf "$apk_dest" "${desktop_build_dir}/convora-latest.apk"
+    else
+      log_error "APK file not found at expected location: $apk_source"
+      cd -
+      return 1
+    fi
+    
+    cd -
+    return 0
+  else
+    log_error "Flutter APK build failed"
+    cd -
+    return 1
+  fi
+}
+
 # Main execution
 main() {
   log_info "Starting ECR push script..."
@@ -151,6 +202,17 @@ main() {
   log_info "All images pushed to ECR successfully! ✅"
   log_info "Backend: ${ECR_REGISTRY}/${BACKEND_REPO}:latest"
   log_info "Admin: ${ECR_REGISTRY}/${ADMIN_REPO}:latest"
+  
+  # Build Flutter APK
+  log_info ""
+  log_info "================================"
+  log_info "Building Flutter APK..."
+  log_info "================================"
+  if build_flutter_apk; then
+    log_info "Flutter APK built and saved successfully ✅"
+  else
+    log_warn "Flutter APK build skipped or failed (Flutter SDK may not be installed)"
+  fi
 }
 
 # Run main function
