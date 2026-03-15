@@ -55,6 +55,18 @@ class DashboardScreen extends ConsumerWidget {
                   context.push('/manage-scenarios');
                 },
               ),
+              if (authState.user?.orgRole == 'org_admin')
+                PopupMenuItem(
+                  child: const ListTile(
+                    leading: Icon(Icons.group_rounded),
+                    title: Text('Manage Team'),
+                    contentPadding: EdgeInsets.zero,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  onTap: () {
+                    context.push('/org-members');
+                  },
+                ),
               PopupMenuItem(
                 child: const ListTile(
                   leading: Icon(Icons.dns_outlined),
@@ -206,6 +218,70 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                 ),
               ),
+              // My Team card (org_admin only)
+              if (authState.user?.orgRole == 'org_admin') ...
+                [
+                  const SizedBox(height: 12),
+                  InkWell(
+                    onTap: () => context.push('/org-analytics'),
+                    child: Card(
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.bar_chart_rounded,
+                                  color: Colors.teal.shade600,
+                                  size: 28,
+                                ),
+                                const SizedBox(width: 16),
+                                Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'My Team',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.copyWith(
+                                              fontWeight:
+                                                  FontWeight.bold),
+                                    ),
+                                    Text(
+                                      'View team performance',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                              color:
+                                                  Colors.grey.shade600),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              size: 16,
+                              color: Colors.grey.shade400,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               const SizedBox(height: 24),
               // Key Stats Grid (2x2)
               GridView.count(

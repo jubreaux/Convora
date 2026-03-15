@@ -629,3 +629,74 @@ class UserStats {
     );
   }
 }
+
+// ===== Organization Models =====
+class OrgMember {
+  final int id;
+  final int userId;
+  final String orgRole;
+  final bool isActive;
+  final DateTime joinedAt;
+  final String? userEmail;
+  final String? userName;
+
+  OrgMember({
+    required this.id,
+    required this.userId,
+    required this.orgRole,
+    required this.isActive,
+    required this.joinedAt,
+    this.userEmail,
+    this.userName,
+  });
+
+  factory OrgMember.fromJson(Map<String, dynamic> json) {
+    return OrgMember(
+      id: json['id'] as int,
+      userId: json['user_id'] as int,
+      orgRole: json['org_role'] as String,
+      isActive: json['is_active'] as bool,
+      joinedAt: DateTime.parse(json['joined_at'] as String),
+      userEmail: json['user_email'] as String?,
+      userName: json['user_name'] as String?,
+    );
+  }
+}
+
+class OrgMemberStats {
+  final int userId;
+  final String userName;
+  final String userEmail;
+  final String orgRole;
+  final int totalSessions;
+  final double avgScore;
+  final int bestScore;
+  final double appointmentRate;
+  final DateTime joinedAt;
+
+  OrgMemberStats({
+    required this.userId,
+    required this.userName,
+    required this.userEmail,
+    required this.orgRole,
+    required this.totalSessions,
+    required this.avgScore,
+    required this.bestScore,
+    required this.appointmentRate,
+    required this.joinedAt,
+  });
+
+  factory OrgMemberStats.fromJson(Map<String, dynamic> json) {
+    return OrgMemberStats(
+      userId: json['user_id'] as int,
+      userName: json['user_name'] as String,
+      userEmail: json['user_email'] as String,
+      orgRole: json['org_role'] as String,
+      totalSessions: json['total_sessions'] as int,
+      avgScore: (json['avg_score'] as num).toDouble(),
+      bestScore: json['best_score'] as int,
+      appointmentRate: (json['appointment_rate'] as num).toDouble(),
+      joinedAt: DateTime.parse(json['joined_at'] as String),
+    );
+  }
+}

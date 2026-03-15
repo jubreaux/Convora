@@ -311,4 +311,41 @@ class ConvoraApiClient {
       },
     );
   }
+
+  // ===== Organization =====
+  Future<List<OrgMember>> getOrgMembers() async {
+    final response = await dioClient.dio.get('/auth/org/members');
+    return (response.data as List)
+        .map((m) => OrgMember.fromJson(m))
+        .toList();
+  }
+
+  Future<OrgMember> inviteOrgMember({
+    required String email,
+    required String name,
+    required String tempPassword,
+    String orgRole = 'member',
+  }) async {
+    final response = await dioClient.dio.post(
+      '/auth/org/members',
+      data: {
+        'email': email,
+        'name': name,
+        'temp_password': tempPassword,
+        'org_role': orgRole,
+      },
+    );
+    return OrgMember.fromJson(response.data);
+  }
+
+  Future<void> deactivateOrgMember(int userId) async {
+    await dioClient.dio.delete('/auth/org/members/$userId');
+  }
+
+  Future<List<OrgMemberStats>> getOrgAnalytics() async {
+    final response = await dioClient.dio.get('/auth/org/analytics');
+    return (response.data as List)
+        .map((m) => OrgMemberStats.fromJson(m))
+        .toList();
+  }
 }

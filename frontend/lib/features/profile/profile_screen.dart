@@ -165,6 +165,69 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
               const SizedBox(height: 32),
 
+              // Organization info section (if member of org)
+              if (user?.orgId != null && user?.orgId != 0) ...[
+                Card(
+                  elevation: 0,
+                  color: Colors.teal.shade50,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: Colors.teal.shade200),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Organization Information',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Text(
+                              'Organization ID: ',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            Expanded(
+                              child: Text(
+                                '#${user?.orgId}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Text(
+                              'Role: ',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            Expanded(
+                              child: _RoleBadge(role: user?.orgRole ?? ''),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+
               // Profile form card
               Card(
                 elevation: 0,
@@ -381,6 +444,49 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// Role Badge Widget
+// ===========================================================================
+
+class _RoleBadge extends StatelessWidget {
+  final String role;
+
+  const _RoleBadge({required this.role});
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    String label;
+    switch (role) {
+      case 'org_admin':
+        color = Colors.teal;
+        label = 'Admin';
+        break;
+      case 'team_lead':
+        color = Colors.blue;
+        label = 'Team Lead';
+        break;
+      default:
+        color = Colors.grey;
+        label = 'Member';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.4)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+            color: color, fontSize: 12, fontWeight: FontWeight.w600),
       ),
     );
   }

@@ -357,9 +357,25 @@ class OrgMemberResponse(BaseModel):
     org_role: str
     is_active: bool
     joined_at: datetime
+    # User details (populated manually)
+    user_email: Optional[str] = None
+    user_name: Optional[str] = None
 
     class Config:
         from_attributes = True
+
+
+class OrgMemberStatsResponse(BaseModel):
+    """Org member with their performance statistics."""
+    user_id: int
+    user_name: str
+    user_email: str
+    org_role: str
+    total_sessions: int
+    avg_score: float
+    best_score: int
+    appointment_rate: float  # percentage 0-100
+    joined_at: datetime
 
 
 class OrganizationResponse(BaseModel):

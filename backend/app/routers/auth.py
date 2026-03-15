@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from app.database import get_db
 from app.models import User, Organization, OrgMember
-from app.schemas import UserRegister, UserLogin, UserSelfUpdate, UserPasswordReset, TokenResponse, UserResponse, OrgMemberCreate, OrgMemberResponse
+from app.schemas import UserRegister, UserLogin, UserSelfUpdate, UserPasswordReset, TokenResponse, UserResponse, OrgMemberCreate, OrgMemberResponse, OrgMemberStatsResponse
 from app.utils import hash_password, verify_password, create_access_token, get_current_user
 from datetime import timedelta, datetime
 from app.config import get_settings
@@ -249,8 +250,22 @@ async def list_org_members(
         OrgMember.org_id == org_member.org_id,
         OrgMember.is_active == True
     ).order_by(OrgMember.joined_at.desc()).all()
-    
-    return [OrgMemberResponse.from_orm(m) for m in members]
+
+    result = []
+    for m in members:
+        user = db.query(User).filter(User.id == m.user_id).first()
+        response = OrgMemberResponse(
+            id=m.id,
+            user_id=m.user_id,
+            org_role=m.org_role,
+            is_active=m.is_active,
+            joined_at=m.joined_at,
+            user_email=user.email if user else None,
+            user_name=user.name if user else None,
+        )
+        result.append(response)
+
+    return result
 
 
 @router.post("/org/members", response_model=OrgMemberResponse)
@@ -331,3 +346,48 @@ async def deactivate_org_member(
     db.commit()
     
     return {"ok": True, "message": "Member deactivated"}
+
+
+@router.get("/org/analytics", response_model=list[OrgMemberStatsResponse])
+async def get_org_analytics(
+    db: Session = Depends(get_db),
+    org_member: OrgMember = Depends(_require_org_admin)
+):
+    """Get performance analytics for all members of the organization."""
+    from app.models import Session as TrainingSession
+
+    members = db.query(OrgMember).filter(
+        OrgMember.org_id == org_member.org_id,
+        OrgMember.is_active == True
+    ).all()
+
+    result = []
+    for m in members:
+        user = db.query(User).filter(User.id == m.user_id).first()
+        if not user:
+            continue
+
+        sessions = db.query(TrainingSession).filter(
+            TrainingSession.user_id == m.user_id,
+            TrainingSession.status == "completed"
+        ).all()
+
+        total = len(sessions)
+        avg_score = round(sum(s.score for s in sessions) / total, 1) if total > 0 else 0.0
+        best_score = max((s.score for s in sessions), default=0)
+        appts = sum(1 for s in sessions if s.appointment_set)
+        appt_rate = round((appts / total) * 100, 1) if total > 0 else 0.0
+
+        result.append(OrgMemberStatsResponse(
+            user_id=m.user_id,
+            user_name=user.name,
+            user_email=user.email,
+            org_role=m.org_role,
+            total_sessions=total,
+            avg_score=avg_score,
+            best_score=best_score,
+            appointment_rate=appt_rate,
+            joined_at=m.joined_at,
+        ))
+
+    return result

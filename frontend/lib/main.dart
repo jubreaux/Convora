@@ -14,6 +14,8 @@ import 'package:convora/features/feedback/feedback_screen.dart';
 import 'package:convora/features/session_review/session_review_screen.dart';
 import 'package:convora/features/account_setup/account_setup_screen.dart';
 import 'package:convora/features/profile/profile_screen.dart';
+import 'package:convora/features/organization/org_members_screen.dart';
+import 'package:convora/features/organization/org_analytics_screen.dart';
 
 // ===== Router Setup =====
 final routerProvider = Provider<GoRouter>((ref) {
@@ -90,6 +92,14 @@ final routerProvider = Provider<GoRouter>((ref) {
           final id = state.pathParameters['id'];
           return ScenarioFormScreen(scenarioId: id != null ? int.parse(id) : null);
         },
+      ),
+      GoRoute(
+        path: '/org-members',
+        builder: (context, state) => const OrgMembersScreen(),
+      ),
+      GoRoute(
+        path: '/org-analytics',
+        builder: (context, state) => const OrgAnalyticsScreen(),
       ),
     ],
   );

@@ -354,6 +354,21 @@ final scenarioContextsProvider = FutureProvider<List<ScenarioContext>>((ref) asy
   return await apiClient.getScenarioContexts();
 });
 
+// ===== Org Member Providers =====
+final orgMembersProvider = FutureProvider<List<OrgMember>>((ref) async {
+  final authState = ref.watch(authProvider);
+  if (!authState.isAuthenticated) throw Exception('Not authenticated');
+  final apiClient = ref.watch(apiClientProvider);
+  return await apiClient.getOrgMembers();
+});
+
+final orgAnalyticsProvider = FutureProvider<List<OrgMemberStats>>((ref) async {
+  final authState = ref.watch(authProvider);
+  if (!authState.isAuthenticated) throw Exception('Not authenticated');
+  final apiClient = ref.watch(apiClientProvider);
+  return await apiClient.getOrgAnalytics();
+});
+
 // ===== Active Session State =====
 class ActiveSessionState {
   final int? sessionId;
