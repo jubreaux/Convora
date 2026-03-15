@@ -130,6 +130,7 @@ class ConvoraApiClient {
   Future<User> updateProfile({
     String? name,
     String? email,
+    bool updateVoice = false,
     String? voicePreference,
   }) async {
     final response = await dioClient.dio.put(
@@ -137,7 +138,7 @@ class ConvoraApiClient {
       data: {
         if (name != null) 'name': name,
         if (email != null) 'email': email,
-        if (voicePreference != null) 'preferred_voice': voicePreference,
+        if (updateVoice) 'preferred_voice': voicePreference,
       },
     );
     return User.fromJson(response.data);
@@ -269,6 +270,14 @@ class ConvoraApiClient {
   Future<SessionEndResponse> endSession(int sessionId) async {
     final response = await dioClient.dio.post('/sessions/$sessionId/end');
     return SessionEndResponse.fromJson(response.data);
+  }
+
+  Future<String> synthesizeText(String text) async {
+    final response = await dioClient.dio.post(
+      '/tts/synthesize',
+      data: {'text': text},
+    );
+    return response.data['audio_base64'] as String;
   }
 
   Future<List<SessionHistory>> getUserHistory() async {

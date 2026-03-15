@@ -73,14 +73,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final user = ref.read(authProvider).user;
     final updatedName = name != user?.name ? name : null;
     final updatedEmail = email != user?.email ? email : null;
-    final updatedVoice = _selectedVoice != user?.preferredVoice ? _selectedVoice : null;
+    final voiceChanged = _selectedVoice != user?.preferredVoice;
 
     // Only call if something changed
-    if (updatedName != null || updatedEmail != null || updatedVoice != null) {
+    if (updatedName != null || updatedEmail != null || voiceChanged) {
       await ref.read(authProvider.notifier).updateProfile(
         name: updatedName,
         email: updatedEmail,
-        voicePreference: updatedVoice,
+        updateVoice: voiceChanged,
+        voicePreference: voiceChanged ? _selectedVoice : null,
       );
     }
 

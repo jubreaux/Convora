@@ -175,8 +175,8 @@ async def update_me(
     if update_data.name is not None:
         user.name = update_data.name
     
-    # Update voice preference if provided
-    if update_data.preferred_voice is not None:
+    # Update voice preference if explicitly included in request (supports clearing to None)
+    if 'preferred_voice' in update_data.model_fields_set:
         user.preferred_voice = update_data.preferred_voice
     
     db.commit()

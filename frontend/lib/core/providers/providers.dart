@@ -213,6 +213,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> updateProfile({
     String? name,
     String? email,
+    bool updateVoice = false,
     String? voicePreference,
   }) async {
     if (state.user == null) return;
@@ -221,6 +222,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final updatedUser = await apiClient.updateProfile(
         name: name,
         email: email,
+        updateVoice: updateVoice,
         voicePreference: voicePreference,
       );
       state = state.copyWith(
@@ -508,6 +510,15 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
 
     state = state.copyWith(isRecording: false);
     await sendMessage(state.liveTranscript, voice: true);
+  }
+
+  Future<void> playMessageAudio(String text) async {
+    try {
+      final audioBase64 = await apiClient.synthesizeText(text);
+      await _playAudio(audioBase64);
+    } catch (_) {
+      // Non-fatal — audio playback errors are not surfaced to the user
+    }
   }
 
   Future<void> sendMessage(String message, {bool voice = false}) async {

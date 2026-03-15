@@ -5,7 +5,7 @@ from app.models import (
     User, PersonalityTemplate, TraitSet, ScenarioContext,
     FinetuneExample, Scenario, Objective, Session, SessionObjective, Message
 )
-from app.routers import auth, scenarios, sessions, admin, metadata
+from app.routers import auth, scenarios, sessions, admin, metadata, tts
 from seed.load_seed import seed_database
 import uvicorn
 from sqlalchemy import text
@@ -53,6 +53,7 @@ app.include_router(scenarios.router)
 app.include_router(sessions.router)
 app.include_router(admin.router)
 app.include_router(metadata.router)
+app.include_router(tts.router)
 
 
 @app.get("/health")
