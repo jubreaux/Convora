@@ -6,6 +6,13 @@ import 'package:convora/core/providers/providers.dart';
 import 'package:convora/core/models/models.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+enum ConversationMode {
+  userVoiceTwoway,      // Speak → AI responds → Auto-listen → Auto-restart
+  textAndListen,         // Type → AI responds → Click listen (manual control)
+  talkAndRead,          // Speak → AI responds → Text only, no auto-audio
+  unset,                 // Not yet determined
+}
+
 class TrainingSessionScreen extends ConsumerStatefulWidget {
   const TrainingSessionScreen({super.key});
 
@@ -19,8 +26,9 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
   late stt.SpeechToText _speechToText;
   late ScrollController _scrollController;
   bool _speechInitialized = false;
+  bool _isInitializingSpeech = false;  // Prevent concurrent initialization
   bool _hasText = false;
-  bool _voiceMode = false;
+  ConversationMode _conversationMode = ConversationMode.unset;  // Track conversation mode
   bool _isStartingListening = false;
   int? _playingMessageId;
   bool _objectivesExpanded = false; // Track objectives panel expansion
@@ -47,6 +55,10 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
   }
 
   Future<void> _initSpeech() async {
+    // Prevent concurrent initialization attempts
+    if (_isInitializingSpeech || _speechInitialized) return;
+    _isInitializingSpeech = true;
+
     try {
       final available = await _speechToText.initialize(
         onError: (error) => debugPrint('Speech error: $error'),
@@ -57,6 +69,8 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
       }
     } catch (e) {
       debugPrint('Error initializing speech: $e');
+    } finally {
+      _isInitializingSpeech = false;
     }
   }
 
@@ -85,8 +99,10 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
         return;
       }
 
-      // Enter voice conversation mode
-      _voiceMode = true;
+      // Set conversation mode to user voice two-way on first voice interaction
+      if (_conversationMode == ConversationMode.unset) {
+        _conversationMode = ConversationMode.userVoiceTwoway;
+      }
 
       // Call notifier to set isRecording=true
       await ref.read(activeSessionProvider.notifier).startListening();
@@ -149,6 +165,11 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
     _messageController.clear();
     setState(() => _hasText = false);
 
+    // Set conversation mode to text and listen on first text interaction
+    if (_conversationMode == ConversationMode.unset) {
+      _conversationMode = ConversationMode.textAndListen;
+    }
+
     // Send text with voice=false (no TTS response audio)
     await ref
         .read(activeSessionProvider.notifier)
@@ -208,20 +229,22 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
         }
       }
 
-      // Auto-restart listening after TTS finishes (voice conversation loop)
-      if (_voiceMode &&
+      // Auto-restart listening ONLY in userVoiceTwoway mode after TTS finishes
+      if (_conversationMode == ConversationMode.userVoiceTwoway &&
           (previous?.isSpeaking ?? false) &&
           !next.isSpeaking &&
           !next.isEnded &&
           !next.isLoading) {
         Future.delayed(const Duration(milliseconds: 600), () {
-          if (mounted && _voiceMode) _startListening();
+          if (mounted && _conversationMode == ConversationMode.userVoiceTwoway) {
+            _startListening();
+          }
         });
       }
 
-      // Clear voice mode when session ends
+      // Clear conversation mode when session ends
       if (next.isEnded && !(previous?.isEnded ?? false)) {
-        _voiceMode = false;
+        _conversationMode = ConversationMode.unset;
         final router = GoRouter.of(context);
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted) router.go('/feedback');
@@ -539,6 +562,20 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
     );
   }
 
+  // ---- Get conversation mode label ----
+  String _getConversationModeLabel() {
+    switch (_conversationMode) {
+      case ConversationMode.userVoiceTwoway:
+        return 'Voice Two-Way';
+      case ConversationMode.textAndListen:
+        return 'Text & Listen';
+      case ConversationMode.talkAndRead:
+        return 'Talk & Read';
+      case ConversationMode.unset:
+        return '';
+    }
+  }
+
   // ---- Status pill (Listening / Thinking / Speaking) ----
   Widget _buildStatusPill(ActiveSessionState sessionState) {
     String? label;
@@ -580,6 +617,17 @@ class _TrainingSessionScreenState extends ConsumerState<TrainingSessionScreen> {
           valueColor: AlwaysStoppedAnimation(Colors.grey.shade600),
         ),
       );
+    } else if (_conversationMode != ConversationMode.unset) {
+      // Show conversation mode when no action is happening
+      label = _getConversationModeLabel();
+      bgColor = Colors.blue.shade50;
+      borderColor = Colors.blue.shade200;
+      textColor = Colors.blue.shade700;
+      icon = _conversationMode == ConversationMode.userVoiceTwoway
+          ? Icons.keyboard_voice
+          : (_conversationMode == ConversationMode.textAndListen
+              ? Icons.textsms
+              : Icons.auto_stories);
     }
 
     if (label == null) return const SizedBox.shrink();
