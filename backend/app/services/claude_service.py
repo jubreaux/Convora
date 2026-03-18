@@ -102,23 +102,20 @@ As you interact with the agent, evaluate their performance:
    - Replace [ID] with the actual ID number from the objective list above
    - Examples: mark_objective_complete(objective_id=1, notes="Agent opened with warm greeting")
    - Do NOT mention or explain scoring to the agent
+   - Each objective is scored only ONCE when first achieved
 
-2. BONUS POINTS: Award bonus points for exceptional behavior not covered by objectives:
-   - Use: add_bonus_points(amount=5, reason="specific behavior that impressed you")
-
-3. DISC ALIGNMENT: When agent demonstrates understanding of your DISC profile:
-   - Use: disc_alignment_noted(disc_type="{scenario.disc_type}", example="What they said or did")
-
-4. APPOINTMENT SETTING: If you agree to schedule a call/meeting:
+2. APPOINTMENT SETTING: If you agree to schedule a call/meeting:
    - Use: set_appointment(proposed_time="specific date/time from context")
 
-5. ENDING: If you decide to end the conversation:
+3. ENDING: If you decide to end the conversation:
    - Use: end_conversation(reason="why you're ending")
 
 CRITICAL RULES FOR SCORING:
 - Evaluate each agent message honestly and fairly
 - Only mark objectives complete when the agent TRULY achieves them
 - Track and reference the status above — don't re-score the same objective twice
+- Do NOT use bonus points or DISC alignment tools — scoring comes ONLY from objectives
+- Each objective awards its designated max_points value when completed
 - Be natural in your client role — don't let evaluation interfere with realistic conversation
 - Score happens silently — agent should never know they're being evaluated
 
@@ -195,6 +192,8 @@ def process_tool_call(
             SessionObjective.objective_id == objective_id
         ).first()
         
+        points_awarded = 0
+        
         if not session_obj:
             # Create new session objective
             session_obj = SessionObjective(
@@ -206,64 +205,45 @@ def process_tool_call(
             )
             db.add(session_obj)
             db_session.score += objective.max_points
+            points_awarded = objective.max_points
         elif not session_obj.achieved:
-            # Mark existing as achieved
+            # Mark existing as achieved (only if not already achieved)
             session_obj.achieved = True
             session_obj.points_awarded = objective.max_points
             session_obj.notes = notes
             db_session.score += objective.max_points
+            points_awarded = objective.max_points
+        else:
+            # Already achieved - don't award points again
+            db.commit()
+            logger.info(f"⚠️ Objective {objective_id} already completed")
+            return {
+                "status": "already_completed",
+                "message": f"Objective {objective_id} was already completed",
+                "points_awarded": 0,
+                "new_score": db_session.score
+            }
         
         db.commit()
-        logger.info(f"✅ Objective {objective_id} marked complete | Score: +{objective.max_points} → {db_session.score}")
+        logger.info(f"✅ Objective {objective_id} marked complete | Score: +{points_awarded} → {db_session.score}")
         return {
             "status": "success",
-            "points_awarded": objective.max_points,
+            "points_awarded": points_awarded,
             "new_score": db_session.score
         }
     
     elif tool_name == "add_bonus_points":
-        amount = tool_input.get("amount", 0)
-        reason = tool_input.get("reason", "Bonus awarded")
-        
-        db_session.score += amount
-        db.add(SessionScoreEvent(
-            session_id=db_session.id,
-            event_type="bonus",
-            points=amount,
-            label="Bonus Points",
-            reason=reason
-        ))
-        db.commit()
-        
+        # Bonus points tool should not be used - all scoring comes from objectives
         return {
-            "status": "success",
-            "bonus_points": amount,
-            "reason": reason,
-            "new_score": db_session.score
+            "status": "error",
+            "message": "Bonus points are not used in this scoring system. All points come from marked objectives."
         }
     
     elif tool_name == "disc_alignment_noted":
-        disc_type = tool_input.get("disc_type")
-        example = tool_input.get("example")
-        
-        # Award 5 points for DISC alignment (can be called multiple times)
-        points = 5
-        db_session.score += points
-        db.add(SessionScoreEvent(
-            session_id=db_session.id,
-            event_type="disc_alignment",
-            points=points,
-            label=f"DISC Alignment ({disc_type})",
-            reason=example
-        ))
-        db.commit()
-        
+        # DISC alignment bonus should not be used - all scoring comes from objectives
         return {
-            "status": "success",
-            "disc_type": disc_type,
-            "example": example,
-            "points_awarded": points,
-            "new_score": db_session.score
+            "status": "error",
+            "message": "DISC alignment bonuses are not used in this scoring system. All points come from marked objectives."
         }
     
     elif tool_name == "set_appointment":

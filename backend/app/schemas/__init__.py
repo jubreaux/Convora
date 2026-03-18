@@ -42,7 +42,7 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str
     name: str
-    account_type: str  # "personal" or "company"
+    account_type: str = "personal"  # "personal" or "company", defaults to personal
     company_name: Optional[str] = None  # Required when account_type="company"
 
 
@@ -181,6 +181,7 @@ class ScenarioDetailResponse(BaseModel):
 class ScenarioCreate(BaseModel):
     title: str
     disc_type: str  # "D", "I", "S", "C"
+    visibility: str = "personal"  # "personal", "org", "public"
     personality_template_id: Optional[int] = None  # Auto-defaults to first available if omitted
     trait_set_id: Optional[int] = None  # Auto-defaults to first available if omitted
     scenario_context_id: Optional[int] = None  # Auto-defaults to first available if omitted
